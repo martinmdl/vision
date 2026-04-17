@@ -1,0 +1,13 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "vision-postgres",
+      "Group": "Servers",
+      "Host": "postgres",
+      "Port": 5432,
+      "MaintenanceDB": "vision_db",
+      "Username": "vision_user",
+      "SSLMode": "prefer"
+    }
+  }
+}

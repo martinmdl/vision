@@ -1,0 +1,71 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vision-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vision_db
+      POSTGRES_USER: vision_user
+      POSTGRES_PASSWORD: vision_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vision_user -d vision_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: vision-pgadmin
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+      # - ./servers.json:/pgadmin4/servers.json
+
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: vision-back
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      CREDENTIALS: postgresql+psycopg2://vision_user:vision_pass@postgres:5432/vision_db
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back:/app
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: vision-front
+    restart: unless-stopped
+    depends_on:
+      - back
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./front:/app
+      - front_node_modules:/app/node_modules
+    command: npm run dev -- --host 0.0.0.0 --port 8080
+
+volumes:
+  postgres_data:
+  front_node_modules:
+  pgadmin_data:
