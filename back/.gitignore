@@ -2,3 +2,4 @@
 .env
 catboost_info
 __pycache__/
+model
