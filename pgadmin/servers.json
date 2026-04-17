@@ -1,7 +1,7 @@
 {
   "Servers": {
     "1": {
-      "Name": "vision-postgres",
+      "Name": "PostgreSQL 18",
       "Group": "Servers",
       "Host": "postgres",
       "Port": 5432,
