@@ -53,6 +53,10 @@ docker compose build back
 docker compose build front
 ```
 
+```delete BD (IMPORTANTE: borrar archivo src/model/last_trained_date.txt también)
+docker exec -it vision-postgres psql -U vision_user -d vision_db -c "DROP TABLE IF EXISTS ventas, productos, detalle_ventas, clima, feriado, tipo_feriado CASCADE;"
+```
+
 ## PostgreSQL connection
 
 The backend container uses this connection string via environment variable:

@@ -5,7 +5,7 @@ import gzip
 from ..db.managementDB import getDBLastYear
 
 # API para uploadFile
-async def getWeather(df_venta):
+def getWeather(df_venta):
     firstYear, lastYear = getYears(df_venta)
     dbLastYear = getDBLastYear()
 

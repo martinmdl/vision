@@ -102,14 +102,31 @@ def save_to_postgres(df_table, table_name, id_table):
     table = TableEnum.get_table(table_name)
     upsert_dataframe(df_table, table, id_table)
 
-def upsert_dataframe(df, table, pk_column):
-    # Inserta o ignora registros existentes según pk_column
-    with engine.begin() as begin:
-        for row in df.to_dict(orient="records"):
-            stmt = insert(table).values(**row).on_conflict_do_nothing(
-                index_elements=[pk_column]
-            )
-            begin.execute(stmt)
+def upsert_dataframe(df, table, pk_column, chunk_size=1000):
+    if df.empty:
+        return
+    
+    with engine.begin() as conn:
+        # Traer PKs que ya existen en la BD
+        existing = pd.read_sql(
+            f"SELECT {pk_column} FROM {table.name}", conn
+        )
+        existing_ids = set(existing[pk_column].astype(str))
+        
+        # Filtrar solo filas nuevas
+        df_new = df[~df[pk_column].astype(str).isin(existing_ids)]
+        
+        if df_new.empty:
+            print(f"  {table.name}: sin filas nuevas, skip")
+            return
+        
+        print(f"  {table.name}: insertando {len(df_new)} filas nuevas de {len(df)}")
+        
+        for i in range(0, len(df_new), chunk_size):
+            chunk = df_new.iloc[i:i + chunk_size]
+            stmt = insert(table).values(chunk.to_dict(orient="records"))
+            stmt = stmt.on_conflict_do_nothing(index_elements=[pk_column])
+            conn.execute(stmt)
 
 def getDBLastYear():
     with engine.connect() as conn:

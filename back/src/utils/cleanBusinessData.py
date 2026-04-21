@@ -1,14 +1,19 @@
 import pandas as pd
 import uuid
+import time
 
 def clean_xls(xls_file):
+    t0 = time.time()
     df_venta = pd.read_excel(xls_file, sheet_name="Ventas", skiprows=3)
     df_producto = pd.read_excel(xls_file, sheet_name="Productos")
     df_detalle_venta = pd.read_excel(xls_file, sheet_name="Adiciones")
+    print(f"  [1a] read_excel: {time.time() - t0:.2f}s")
     
+    t1 = time.time()
     df_venta = clean_venta(df_venta)
     df_producto = clean_producto(df_producto)
     df_detalle_venta = clean_detalle_venta(df_detalle_venta, df_producto, df_venta)
+    print(f"  [1b] clean: {time.time() - t1:.2f}s")
 
     return df_venta, df_producto, df_detalle_venta
 

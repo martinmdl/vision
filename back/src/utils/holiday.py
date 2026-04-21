@@ -4,7 +4,7 @@ import requests
 from .weather import getYears
 from ..db.managementDB import getDBLastYear
 
-async def getHoliday(df_venta):
+def getHoliday(df_venta):
     firstYear, lastYear = getYears(df_venta)
     dbLastYear = getDBLastYear()
 
