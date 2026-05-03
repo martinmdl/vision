@@ -5,6 +5,7 @@ import type { Store, ViewMode } from '@/types/store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import UploadDataModal from './UploadDataModal';
 
 interface SidebarProps {
   stores: Store[];
@@ -24,6 +25,7 @@ export default function Sidebar({
 }: SidebarProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [showUploadModal, setShowUploadModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [newStoreName, setNewStoreName] = useState('');
 
@@ -33,6 +35,10 @@ export default function Sidebar({
       setNewStoreName('');
       setShowAddModal(false);
     }
+  };
+
+  const handleUploadData = () => {
+    setShowUploadModal(true);
   };
 
   return (
@@ -79,7 +85,12 @@ export default function Sidebar({
                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isSelected ? 'bg-sidebar-accent' : 'bg-sidebar-fg/20'}`} />
                   <span className="text-base truncate flex-1">{store.name}</span>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1.5 rounded hover:bg-sidebar-fg/10" title="Upload data">
+                    <button
+                      className="p-1.5 rounded hover:bg-sidebar-fg/10"
+                      title="Upload data"
+                      onClick={e => { e.stopPropagation(); handleUploadData(); }}
+                      type="button"
+                    >
                       <Upload className="w-4 h-4" />
                     </button>
                     <button
@@ -177,6 +188,8 @@ export default function Sidebar({
           </div>
         </DialogContent>
       </Dialog>
+
+      <UploadDataModal open={showUploadModal} onOpenChange={setShowUploadModal} />
     </>
   );
 }
