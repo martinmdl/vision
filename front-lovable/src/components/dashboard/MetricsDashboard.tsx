@@ -6,7 +6,7 @@ import {
   type DragEndEvent,
 } from '@dnd-kit/core';
 import {
-  SortableContext, rectSortingStrategy, useSortable, arrayMove,
+  SortableContext, rectSortingStrategy, useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { Metric, GridColumns } from '@/types/store';

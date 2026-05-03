@@ -1,43 +1,114 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell,
 } from 'recharts';
 import { TrendingUp, Calendar, Package, LayoutGrid, Table } from 'lucide-react';
+import { predict, type PredictionItem } from '@/api/services/mvp';
 
 const DAILY_DATA = [
-  { day: 'Mon', predicted: 1240 },
-  { day: 'Tue', predicted: 1180 },
-  { day: 'Wed', predicted: 1350 },
-  { day: 'Thu', predicted: 1290 },
-  { day: 'Fri', predicted: 1580 },
-  { day: 'Sat', predicted: 1820 },
-  { day: 'Sun', predicted: 1440 },
+  { day: 'Lun', predicted: 1240 },
+  { day: 'Mar', predicted: 1180 },
+  { day: 'Mie', predicted: 1350 },
+  { day: 'Jue', predicted: 1290 },
+  { day: 'Vie', predicted: 1580 },
+  { day: 'Sab', predicted: 1820 },
+  { day: 'Dom', predicted: 1440 },
 ];
 
 const TOP_PRODUCTS = [
-  { name: 'Organic Milk 1L', demand: 342 },
-  { name: 'Sourdough Bread', demand: 298 },
-  { name: 'Free Range Eggs', demand: 276 },
-  { name: 'Avocados (3pk)', demand: 251 },
-  { name: 'Greek Yogurt', demand: 234 },
-  { name: 'Bananas (bunch)', demand: 218 },
-  { name: 'Chicken Breast', demand: 203 },
-  { name: 'Sparkling Water', demand: 195 },
-  { name: 'Mixed Salad', demand: 187 },
-  { name: 'Pasta Sauce', demand: 172 },
+  { name: 'Leche Organica 1L', demand: 342 },
+  { name: 'Pan de Masa Madre', demand: 298 },
+  { name: 'Huevos de Campo', demand: 276 },
+  { name: 'Paltas (x3)', demand: 251 },
+  { name: 'Yogur Griego', demand: 234 },
+  { name: 'Bananas (racimo)', demand: 218 },
+  { name: 'Pechuga de Pollo', demand: 203 },
+  { name: 'Agua con Gas', demand: 195 },
+  { name: 'Ensalada Mixta', demand: 187 },
+  { name: 'Salsa de Pasta', demand: 172 },
 ];
 
 const HEATMAP_DATA = [
-  { product: 'Organic Milk', mon: 48, tue: 45, wed: 52, thu: 49, fri: 58, sat: 62, sun: 50 },
-  { product: 'Sourdough', mon: 42, tue: 39, wed: 44, thu: 41, fri: 50, sat: 55, sun: 43 },
-  { product: 'Eggs', mon: 38, tue: 36, wed: 42, thu: 39, fri: 46, sat: 52, sun: 40 },
-  { product: 'Avocados', mon: 35, tue: 32, wed: 38, thu: 36, fri: 42, sat: 48, sun: 37 },
-  { product: 'Yogurt', mon: 33, tue: 30, wed: 36, thu: 34, fri: 40, sat: 44, sun: 35 },
+  { product: 'Leche Organica', mon: 48, tue: 45, wed: 52, thu: 49, fri: 58, sat: 62, sun: 50 },
+  { product: 'Pan de Masa Madre', mon: 42, tue: 39, wed: 44, thu: 41, fri: 50, sat: 55, sun: 43 },
+  { product: 'Huevos', mon: 38, tue: 36, wed: 42, thu: 39, fri: 46, sat: 52, sun: 40 },
+  { product: 'Paltas', mon: 35, tue: 32, wed: 38, thu: 36, fri: 42, sat: 48, sun: 37 },
+  { product: 'Yogur', mon: 33, tue: 30, wed: 36, thu: 34, fri: 40, sat: 44, sun: 35 },
 ];
 
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
+const DAYS_LABEL: Record<(typeof DAYS)[number], string> = {
+  mon: 'Lun',
+  tue: 'Mar',
+  wed: 'Mie',
+  thu: 'Jue',
+  fri: 'Vie',
+  sat: 'Sab',
+  sun: 'Dom',
+};
+
+type HeatmapRow = {
+  product: string;
+  mon: number;
+  tue: number;
+  wed: number;
+  thu: number;
+  fri: number;
+  sat: number;
+  sun: number;
+};
+
+function getDayKey(fecha: string): (typeof DAYS)[number] {
+  const d = new Date(fecha).getDay();
+  return (['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'] as const)[d];
+}
+
+function buildHeatmapFromPredictions(items: PredictionItem[]): HeatmapRow[] {
+  const grouped = new Map<string, HeatmapRow>();
+
+  for (const item of items) {
+    if (!grouped.has(item.nombre)) {
+      grouped.set(item.nombre, {
+        product: item.nombre,
+        mon: 0,
+        tue: 0,
+        wed: 0,
+        thu: 0,
+        fri: 0,
+        sat: 0,
+        sun: 0,
+      });
+    }
+
+    const key = getDayKey(item.fecha_prediccion);
+    const row = grouped.get(item.nombre)!;
+    row[key] += Math.round(item.pred_cantidad || 0);
+  }
+
+  return Array.from(grouped.values())
+    .sort((a, b) => {
+      const totalA = DAYS.reduce((sum, day) => sum + a[day], 0);
+      const totalB = DAYS.reduce((sum, day) => sum + b[day], 0);
+      return totalB - totalA;
+    })
+    .slice(0, 12);
+}
+
+function formatLastPredictionDate(date: Date | null): string {
+  if (!date) {
+    return 'Sin predicciones recientes';
+  }
+
+  return date.toLocaleString('es-AR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 function getHeatColor(val: number) {
   if (val >= 55) return 'bg-primary/80 text-primary-foreground';
@@ -48,11 +119,54 @@ function getHeatColor(val: number) {
 
 export default function PredictionsView() {
   const [view, setView] = useState<'aggregated' | 'detailed'>('aggregated');
+  const [isLoading, setIsLoading] = useState(false);
+  const [lastPredictionDate, setLastPredictionDate] = useState<Date | null>(null);
+  const [backendHeatmap, setBackendHeatmap] = useState<HeatmapRow[]>(HEATMAP_DATA);
+  const [predictMessage, setPredictMessage] = useState<string>('');
+
+  const heatmapData = useMemo(() => {
+    return backendHeatmap.length > 0 ? backendHeatmap : HEATMAP_DATA;
+  }, [backendHeatmap]);
+
   const totalPredicted = DAILY_DATA.reduce((sum, d) => sum + d.predicted, 0);
   const highestDay = DAILY_DATA.reduce((max, d) => d.predicted > max.predicted ? d : max, DAILY_DATA[0]);
 
+  const handleGeneratePredictions = async () => {
+    setIsLoading(true);
+    setPredictMessage('');
+
+    const response = await predict();
+
+    if (response.status_code === 200 && Array.isArray(response.data)) {
+      setBackendHeatmap(buildHeatmapFromPredictions(response.data));
+      setLastPredictionDate(new Date());
+      setPredictMessage('Prediccion generada correctamente.');
+    } else {
+      setPredictMessage(response.message || 'No se pudo generar la prediccion.');
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <h3 className="text-sm font-semibold text-card-foreground">
+          Fecha de la ultima prediccion: {formatLastPredictionDate(lastPredictionDate)}
+        </h3>
+        <button
+          onClick={handleGeneratePredictions}
+          disabled={isLoading}
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60"
+        >
+          {isLoading ? 'Generando...' : 'Generar predicciones'}
+        </button>
+      </div>
+
+      {predictMessage && (
+        <p className="text-xs text-muted-foreground">{predictMessage}</p>
+      )}
+
       {/* Toggle */}
       <div className="flex items-center gap-2">
         <button
@@ -61,7 +175,7 @@ export default function PredictionsView() {
             view === 'aggregated' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
           }`}
         >
-          <LayoutGrid className="w-3.5 h-3.5" /> Aggregated
+          <LayoutGrid className="w-3.5 h-3.5" /> Resumen
         </button>
         <button
           onClick={() => setView('detailed')}
@@ -69,7 +183,7 @@ export default function PredictionsView() {
             view === 'detailed' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground hover:text-foreground'
           }`}
         >
-          <Table className="w-3.5 h-3.5" /> Detailed
+          <Table className="w-3.5 h-3.5" /> Detallado
         </button>
       </div>
 
@@ -78,9 +192,9 @@ export default function PredictionsView() {
           {/* KPI Cards */}
           <div className="grid grid-cols-3 gap-4">
             {[
-              { icon: TrendingUp, label: 'Total Predicted Sales', value: totalPredicted.toLocaleString(), sub: 'Next 7 days' },
-              { icon: Calendar, label: 'Highest Demand Day', value: highestDay.day, sub: `${highestDay.predicted.toLocaleString()} units` },
-              { icon: Package, label: 'Most Demanded', value: TOP_PRODUCTS[0].name, sub: `${TOP_PRODUCTS[0].demand} units` },
+              { icon: TrendingUp, label: 'Ventas Totales Predichas', value: totalPredicted.toLocaleString(), sub: 'Proximos 7 dias' },
+              { icon: Calendar, label: 'Dia de Mayor Demanda', value: highestDay.day, sub: `${highestDay.predicted.toLocaleString()} unidades` },
+              { icon: Package, label: 'Producto Mas Demandado', value: TOP_PRODUCTS[0].name, sub: `${TOP_PRODUCTS[0].demand} unidades` },
             ].map((kpi, i) => (
               <motion.div
                 key={i}
@@ -103,7 +217,7 @@ export default function PredictionsView() {
 
           {/* Daily Demand Chart */}
           <div className="bg-card rounded-xl border border-border shadow-card p-5">
-            <h3 className="text-sm font-semibold text-card-foreground mb-4">Predicted Daily Demand</h3>
+            <h3 className="text-sm font-semibold text-card-foreground mb-4">Demanda Diaria Predicha</h3>
             <ResponsiveContainer width="100%" height={220}>
               <AreaChart data={DAILY_DATA}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -132,7 +246,7 @@ export default function PredictionsView() {
           <div className="grid grid-cols-2 gap-4">
             {/* Top Products */}
             <div className="bg-card rounded-xl border border-border shadow-card p-5">
-              <h3 className="text-sm font-semibold text-card-foreground mb-4">Top 10 Predicted Products</h3>
+              <h3 className="text-sm font-semibold text-card-foreground mb-4">Top 10 Productos Predichos</h3>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={TOP_PRODUCTS} layout="vertical" margin={{ left: 80 }}>
                   <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
@@ -156,19 +270,19 @@ export default function PredictionsView() {
 
             {/* Heatmap */}
             <div className="bg-card rounded-xl border border-border shadow-card p-5">
-              <h3 className="text-sm font-semibold text-card-foreground mb-4">Demand Heatmap</h3>
+              <h3 className="text-sm font-semibold text-card-foreground mb-4">Mapa de Calor de Demanda</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead>
                     <tr>
-                      <th className="text-left font-medium text-muted-foreground pb-2">Product</th>
+                      <th className="text-left font-medium text-muted-foreground pb-2">Producto</th>
                       {DAYS.map(d => (
-                        <th key={d} className="text-center font-medium text-muted-foreground pb-2 capitalize">{d}</th>
+                        <th key={d} className="text-center font-medium text-muted-foreground pb-2 capitalize">{DAYS_LABEL[d]}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
-                    {HEATMAP_DATA.map(row => (
+                    {heatmapData.map(row => (
                       <tr key={row.product}>
                         <td className="py-1 pr-3 font-medium text-foreground">{row.product}</td>
                         {DAYS.map(d => (
@@ -189,14 +303,14 @@ export default function PredictionsView() {
       ) : (
         /* Detailed Table View */
         <div className="bg-card rounded-xl border border-border shadow-card p-5">
-          <h3 className="text-sm font-semibold text-card-foreground mb-4">Detailed Predictions</h3>
+          <h3 className="text-sm font-semibold text-card-foreground mb-4">Predicciones Detalladas</h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left font-medium text-muted-foreground py-2">Product</th>
+                  <th className="text-left font-medium text-muted-foreground py-2">Producto</th>
                   {DAYS.map(d => (
-                    <th key={d} className="text-center font-medium text-muted-foreground py-2 capitalize">{d}</th>
+                    <th key={d} className="text-center font-medium text-muted-foreground py-2 capitalize">{DAYS_LABEL[d]}</th>
                   ))}
                   <th className="text-right font-medium text-muted-foreground py-2">Total</th>
                 </tr>

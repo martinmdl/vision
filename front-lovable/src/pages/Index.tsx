@@ -29,7 +29,7 @@ export default function Index() {
           dateRange={state.dateRange}
           onDateRangeChange={state.setDateRange}
           viewMode={state.viewMode}
-          storeName={selectedStore?.name || 'Select a store'}
+          storeName={selectedStore?.name || 'Selecciona una tienda'}
         />
 
         {state.viewMode === 'metrics' ? (

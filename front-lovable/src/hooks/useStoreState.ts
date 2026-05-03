@@ -2,20 +2,20 @@ import { useState, useCallback } from 'react';
 import type { Store, Metric, ViewMode, GridColumns, DateRange } from '@/types/store';
 
 const SAMPLE_DATA = [
-  { name: 'Mon', value: 420 },
-  { name: 'Tue', value: 380 },
-  { name: 'Wed', value: 510 },
-  { name: 'Thu', value: 470 },
-  { name: 'Fri', value: 620 },
-  { name: 'Sat', value: 780 },
-  { name: 'Sun', value: 590 },
+  { name: 'Lun', value: 420 },
+  { name: 'Mar', value: 380 },
+  { name: 'Mie', value: 510 },
+  { name: 'Jue', value: 470 },
+  { name: 'Vie', value: 620 },
+  { name: 'Sab', value: 780 },
+  { name: 'Dom', value: 590 },
 ];
 
 const PIE_DATA = [
-  { name: 'Apparel', value: 4200 },
-  { name: 'Food', value: 3100 },
-  { name: 'Electronics', value: 2400 },
-  { name: 'Home', value: 1800 },
+  { name: 'Indumentaria', value: 4200 },
+  { name: 'Alimentos', value: 3100 },
+  { name: 'Electronica', value: 2400 },
+  { name: 'Hogar', value: 1800 },
 ];
 
 const CANDLE_DATA = [
@@ -29,24 +29,24 @@ const CANDLE_DATA = [
 ];
 
 const INITIAL_STORES: Store[] = [
-  { id: '1', name: 'Downtown Mall', files: ['sales_jan.xlsx'] },
-  { id: '2', name: 'Airport Branch', files: [] },
-  { id: '3', name: 'Harbor District', files: ['q4_report.xlsx', 'inventory.xlsx'] },
+  { id: '1', name: 'Sucursal Centro', files: ['ventas_enero.xlsx'] },
+  { id: '2', name: 'Sucursal Aeropuerto', files: [] },
+  { id: '3', name: 'Sucursal Puerto', files: ['reporte_q4.xlsx', 'inventario.xlsx'] },
 ];
 
 const INITIAL_METRICS: Metric[] = [
-  { id: 'm1', title: 'Total Revenue', category: 'finance', value: '$48,290', change: 12.5, chartType: 'area', data: SAMPLE_DATA },
-  { id: 'm2', title: 'Units Sold', category: 'product', value: '3,847', change: -2.3, chartType: 'bar', data: SAMPLE_DATA },
-  { id: 'm3', title: 'Gross Margin', category: 'finance', value: '34.2%', change: 1.8, chartType: 'line', data: SAMPLE_DATA },
-  { id: 'm4', title: 'Avg Basket Size', category: 'customer', value: '$27.40', change: 5.1, chartType: 'area', data: SAMPLE_DATA },
-  { id: 'm5', title: 'Sales by Category', category: 'product', value: '$11.5K', change: 4.2, chartType: 'pie', data: PIE_DATA },
-  { id: 'm6', title: 'Channel Mix', category: 'finance', value: '62%', change: 2.1, chartType: 'donut', data: PIE_DATA },
-  { id: 'm7', title: 'Top Products', category: 'product', value: '128', change: 8.4, chartType: 'hbar', data: PIE_DATA },
-  { id: 'm8', title: 'Daily Price Range', category: 'finance', value: '$612', change: 3.7, chartType: 'candle', data: CANDLE_DATA },
-  { id: 'm9', title: 'Performance Score', category: 'operations', value: '87', change: 6.5, chartType: 'radial', data: [{ name: 'score', value: 87 }] },
-  { id: 'm10', title: 'Customer Profile', category: 'customer', value: '4.6/5', change: 1.2, chartType: 'radar', data: [
-    { name: 'Loyalty', value: 80 }, { name: 'Spend', value: 65 }, { name: 'Visits', value: 90 },
-    { name: 'Reviews', value: 70 }, { name: 'Referrals', value: 55 },
+  { id: 'm1', title: 'Ingresos Totales', category: 'finance', value: '$48,290', change: 12.5, chartType: 'area', data: SAMPLE_DATA },
+  { id: 'm2', title: 'Unidades Vendidas', category: 'product', value: '3,847', change: -2.3, chartType: 'bar', data: SAMPLE_DATA },
+  { id: 'm3', title: 'Margen Bruto', category: 'finance', value: '34.2%', change: 1.8, chartType: 'line', data: SAMPLE_DATA },
+  { id: 'm4', title: 'Ticket Promedio', category: 'customer', value: '$27.40', change: 5.1, chartType: 'area', data: SAMPLE_DATA },
+  { id: 'm5', title: 'Ventas por Categoria', category: 'product', value: '$11.5K', change: 4.2, chartType: 'pie', data: PIE_DATA },
+  { id: 'm6', title: 'Mix por Canal', category: 'finance', value: '62%', change: 2.1, chartType: 'donut', data: PIE_DATA },
+  { id: 'm7', title: 'Top Productos', category: 'product', value: '128', change: 8.4, chartType: 'hbar', data: PIE_DATA },
+  { id: 'm8', title: 'Rango Diario de Precio', category: 'finance', value: '$612', change: 3.7, chartType: 'candle', data: CANDLE_DATA },
+  { id: 'm9', title: 'Puntaje de Desempeno', category: 'operations', value: '87', change: 6.5, chartType: 'radial', data: [{ name: 'puntaje', value: 87 }] },
+  { id: 'm10', title: 'Perfil de Cliente', category: 'customer', value: '4.6/5', change: 1.2, chartType: 'radar', data: [
+    { name: 'Lealtad', value: 80 }, { name: 'Gasto', value: 65 }, { name: 'Visitas', value: 90 },
+    { name: 'Resenas', value: 70 }, { name: 'Referidos', value: 55 },
   ]},
 ];
 
@@ -103,7 +103,7 @@ export function useStoreState() {
     setMetrics(prev => {
       const metric = prev.find(m => m.id === id);
       if (!metric) return prev;
-      return [...prev, { ...metric, id: Date.now().toString(), title: `${metric.title} (copy)` }];
+      return [...prev, { ...metric, id: Date.now().toString(), title: `${metric.title} (copia)` }];
     });
   }, []);
 
