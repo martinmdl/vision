@@ -18,7 +18,7 @@ export default function TopBar({ gridColumns, onGridChange, dateRange, onDateRan
     <div className="flex items-center justify-between mb-6">
       <div>
         <h2 className="text-lg font-bold text-foreground tracking-tight">{storeName}</h2>
-        <p className="text-xs text-muted-foreground capitalize">{viewMode} View</p>
+        <p className="text-xs text-muted-foreground capitalize">Vista de {viewMode === 'metrics' ? 'metricas' : 'predicciones'}</p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -46,10 +46,10 @@ export default function TopBar({ gridColumns, onGridChange, dateRange, onDateRan
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="7d">Last 7 days</SelectItem>
-              <SelectItem value="30d">Last 30 days</SelectItem>
-              <SelectItem value="90d">Last 90 days</SelectItem>
-              <SelectItem value="custom">Custom range</SelectItem>
+              <SelectItem value="7d">Ultimos 7 dias</SelectItem>
+              <SelectItem value="30d">Ultimos 30 dias</SelectItem>
+              <SelectItem value="90d">Ultimos 90 dias</SelectItem>
+              <SelectItem value="custom">Rango personalizado</SelectItem>
             </SelectContent>
           </Select>
         </div>

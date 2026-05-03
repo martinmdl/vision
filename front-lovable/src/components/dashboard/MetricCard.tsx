@@ -22,6 +22,15 @@ const CHART_COLOR = 'hsl(243, 75%, 59%)';
 const CHART_COLOR_GREEN = 'hsl(152, 69%, 41%)';
 const CHART_COLOR_RED = 'hsl(0, 72%, 51%)';
 const PIE_COLORS = ['hsl(243, 75%, 59%)', 'hsl(152, 69%, 41%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 60%)', 'hsl(199, 89%, 48%)'];
+const CATEGORY_LABELS: Record<string, string> = {
+  finance: 'finanzas',
+  product: 'producto',
+  weather: 'clima',
+  holidays: 'feriados',
+  promotions: 'promociones',
+  operations: 'operaciones',
+  customer: 'cliente',
+};
 
 function MiniChart({ data, type }: { data: Metric['data']; type: Metric['chartType'] }) {
   const color = type === 'bar' ? CHART_COLOR : CHART_COLOR_GREEN;
@@ -134,7 +143,7 @@ export default function MetricCard({ metric, onRemove, onDuplicate }: MetricCard
       {/* Header */}
       <div className="flex items-start justify-between mb-3">
         <div>
-          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{metric.category}</span>
+          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">{CATEGORY_LABELS[metric.category] ?? metric.category}</span>
           <h3 className="text-sm font-semibold text-card-foreground">{metric.title}</h3>
         </div>
         <DropdownMenu>
@@ -144,14 +153,14 @@ export default function MetricCard({ metric, onRemove, onDuplicate }: MetricCard
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuItem><Settings className="w-3.5 h-3.5 mr-2" /> Edit Configuration</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDuplicate(metric.id)}><Copy className="w-3.5 h-3.5 mr-2" /> Duplicate</DropdownMenuItem>
-            <DropdownMenuItem><BarChart3 className="w-3.5 h-3.5 mr-2" /> Change Chart Type</DropdownMenuItem>
-            <DropdownMenuItem><Filter className="w-3.5 h-3.5 mr-2" /> Apply Filters</DropdownMenuItem>
-            <DropdownMenuItem><Download className="w-3.5 h-3.5 mr-2" /> Export CSV</DropdownMenuItem>
+            <DropdownMenuItem><Settings className="w-3.5 h-3.5 mr-2" /> Editar configuracion</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDuplicate(metric.id)}><Copy className="w-3.5 h-3.5 mr-2" /> Duplicar</DropdownMenuItem>
+            <DropdownMenuItem><BarChart3 className="w-3.5 h-3.5 mr-2" /> Cambiar tipo de grafico</DropdownMenuItem>
+            <DropdownMenuItem><Filter className="w-3.5 h-3.5 mr-2" /> Aplicar filtros</DropdownMenuItem>
+            <DropdownMenuItem><Download className="w-3.5 h-3.5 mr-2" /> Exportar CSV</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="text-destructive" onClick={() => onRemove(metric.id)}>
-              <Trash2 className="w-3.5 h-3.5 mr-2" /> Remove
+              <Trash2 className="w-3.5 h-3.5 mr-2" /> Eliminar
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

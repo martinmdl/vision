@@ -27,8 +27,8 @@ export default function AddMetricModal({ open, onClose, onAdd }: AddMetricModalP
     <Dialog open={open} onOpenChange={v => { if (!v) { onClose(); setSelectedCategory(null); } }}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Metric</DialogTitle>
-          <DialogDescription>{selectedCategory ? 'Choose a metric' : 'Select a category'}</DialogDescription>
+          <DialogTitle>Agregar metrica</DialogTitle>
+          <DialogDescription>{selectedCategory ? 'Elige una metrica' : 'Selecciona una categoria'}</DialogDescription>
         </DialogHeader>
         {!selectedCategory ? (
           <div className="grid grid-cols-2 gap-2">
@@ -45,7 +45,7 @@ export default function AddMetricModal({ open, onClose, onAdd }: AddMetricModalP
                   </div>
                   <div>
                     <div className="text-sm font-medium text-foreground">{cat.label}</div>
-                    <div className="text-[10px] text-muted-foreground">{cat.items.length} metrics</div>
+                    <div className="text-[10px] text-muted-foreground">{cat.items.length} metricas</div>
                   </div>
                 </button>
               );
@@ -54,7 +54,7 @@ export default function AddMetricModal({ open, onClose, onAdd }: AddMetricModalP
         ) : (
           <div className="space-y-1">
             <button onClick={() => setSelectedCategory(null)} className="text-xs text-muted-foreground hover:text-foreground mb-2">
-              ← Back to categories
+              ← Volver a categorias
             </button>
             {METRIC_CATEGORIES.find(c => c.key === selectedCategory)?.items.map(item => (
               <button

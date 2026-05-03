@@ -51,7 +51,7 @@ export default function Sidebar({
             <input
               value={searchQuery}
               onChange={e => onSearchChange(e.target.value)}
-              placeholder="Search stores..."
+              placeholder="Buscar tiendas..."
               className="w-full h-10 pl-9 pr-3 text-sm rounded-lg bg-sidebar-muted text-sidebar-fg-bright placeholder:text-sidebar-fg/40 border border-sidebar-border focus:outline-none focus:ring-1 focus:ring-sidebar-accent"
             />
           </div>
@@ -60,7 +60,7 @@ export default function Sidebar({
         {/* Store list */}
         <div className="flex-1 overflow-y-auto px-2 pb-2">
           <div className="px-4 py-2">
-            <span className="text-xs font-medium uppercase tracking-widest text-sidebar-fg/40">Stores</span>
+            <span className="text-xs font-medium uppercase tracking-widest text-sidebar-fg/40">Tiendas</span>
           </div>
           <AnimatePresence>
             {stores.map(store => {
@@ -79,27 +79,27 @@ export default function Sidebar({
                   <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${isSelected ? 'bg-sidebar-accent' : 'bg-sidebar-fg/20'}`} />
                   <span className="text-base truncate flex-1">{store.name}</span>
                   <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button className="p-1.5 rounded hover:bg-sidebar-fg/10" title="Upload data">
+                    <button className="p-1.5 rounded hover:bg-sidebar-fg/10" title="Subir datos">
                       <Upload className="w-4 h-4" />
                     </button>
                     <button
                       className={`p-1.5 rounded hover:bg-sidebar-fg/10 ${viewMode === 'metrics' && isSelected ? 'text-sidebar-accent' : ''}`}
                       onClick={e => { e.stopPropagation(); onSelectStore(store.id); onViewChange('metrics'); }}
-                      title="Metrics"
+                      title="Metricas"
                     >
                       <BarChart3 className="w-4 h-4" />
                     </button>
                     <button
                       className={`p-1.5 rounded hover:bg-sidebar-fg/10 ${viewMode === 'predictions' && isSelected ? 'text-sidebar-accent' : ''}`}
                       onClick={e => { e.stopPropagation(); onSelectStore(store.id); onViewChange('predictions'); }}
-                      title="Predictions"
+                      title="Predicciones"
                     >
                       <TrendingUp className="w-4 h-4" />
                     </button>
                     <button
                       className="p-1.5 rounded hover:bg-destructive/20 hover:text-destructive"
                       onClick={e => { e.stopPropagation(); setDeleteTarget(store.id); }}
-                      title="Delete"
+                      title="Eliminar"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -116,13 +116,13 @@ export default function Sidebar({
             onClick={() => setShowAddModal(true)}
             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-sidebar-fg-bright rounded-lg bg-sidebar-accent hover:opacity-90 transition-opacity"
           >
-            <Plus className="w-4 h-4" /> Add Store
+            <Plus className="w-4 h-4" /> Agregar tienda
           </button>
           <button
             onClick={() => setShowInstructions(true)}
             className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-sidebar-fg hover:bg-sidebar-muted rounded-lg transition-colors"
           >
-            <Info className="w-4 h-4" /> Instructions
+            <Info className="w-4 h-4" /> Instrucciones
           </button>
         </div>
       </aside>
@@ -131,18 +131,18 @@ export default function Sidebar({
       <Dialog open={showAddModal} onOpenChange={setShowAddModal}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add New Store</DialogTitle>
-            <DialogDescription>Enter a name for the new store location.</DialogDescription>
+            <DialogTitle>Agregar nueva tienda</DialogTitle>
+            <DialogDescription>Ingresa un nombre para la nueva sucursal.</DialogDescription>
           </DialogHeader>
           <Input
             value={newStoreName}
             onChange={e => setNewStoreName(e.target.value)}
-            placeholder="Store name"
+            placeholder="Nombre de la tienda"
             onKeyDown={e => e.key === 'Enter' && handleAdd()}
           />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancel</Button>
-            <Button onClick={handleAdd}>Add Store</Button>
+            <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancelar</Button>
+            <Button onClick={handleAdd}>Agregar tienda</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -151,12 +151,12 @@ export default function Sidebar({
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Store</DialogTitle>
-            <DialogDescription>This action cannot be undone. All data for this store will be permanently removed.</DialogDescription>
+            <DialogTitle>Eliminar tienda</DialogTitle>
+            <DialogDescription>Esta accion no se puede deshacer. Todos los datos de esta tienda se eliminaran de forma permanente.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => { if (deleteTarget) onDeleteStore(deleteTarget); setDeleteTarget(null); }}>Delete</Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => { if (deleteTarget) onDeleteStore(deleteTarget); setDeleteTarget(null); }}>Eliminar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -165,15 +165,15 @@ export default function Sidebar({
       <Dialog open={showInstructions} onOpenChange={setShowInstructions}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Getting Started</DialogTitle>
-            <DialogDescription>How to use the Retail Analytics Dashboard</DialogDescription>
+            <DialogTitle>Primeros pasos</DialogTitle>
+            <DialogDescription>Como usar el panel de analitica de retail</DialogDescription>
           </DialogHeader>
           <div className="space-y-3 text-sm text-muted-foreground">
-            <p><strong className="text-foreground">1. Add a store</strong> — Click "+ Add Store" to create a new location.</p>
-            <p><strong className="text-foreground">2. Upload data</strong> — Use the upload icon to import Excel files with sales data.</p>
-            <p><strong className="text-foreground">3. View metrics</strong> — Click the chart icon to see performance dashboards.</p>
-            <p><strong className="text-foreground">4. Predictions</strong> — Use the trend icon to view demand forecasts.</p>
-            <p><strong className="text-foreground">5. Customize</strong> — Add, remove, or configure metric cards to fit your needs.</p>
+            <p><strong className="text-foreground">1. Agregar una tienda</strong> - Haz clic en "Agregar tienda" para crear una nueva sucursal.</p>
+            <p><strong className="text-foreground">2. Subir datos</strong> - Usa el icono de carga para importar archivos Excel con ventas.</p>
+            <p><strong className="text-foreground">3. Ver metricas</strong> - Haz clic en el icono de grafico para ver los tableros.</p>
+            <p><strong className="text-foreground">4. Predicciones</strong> - Usa el icono de tendencia para ver pronosticos de demanda.</p>
+            <p><strong className="text-foreground">5. Personalizar</strong> - Agrega, elimina o configura tarjetas de metricas segun tu necesidad.</p>
           </div>
         </DialogContent>
       </Dialog>
