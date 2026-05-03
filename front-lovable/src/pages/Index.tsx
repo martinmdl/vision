@@ -9,7 +9,7 @@ export default function Index() {
   const selectedStore = state.allStores.find(s => s.id === state.selectedStoreId);
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex h-screen w-full overflow-hidden">
       <Sidebar
         stores={state.stores}
         selectedStoreId={state.selectedStoreId}
@@ -22,7 +22,7 @@ export default function Index() {
         viewMode={state.viewMode}
       />
 
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-8 overflow-y-auto h-screen">
         <TopBar
           gridColumns={state.gridColumns}
           onGridChange={state.setGridColumns}
@@ -39,6 +39,7 @@ export default function Index() {
             onRemoveMetric={state.removeMetric}
             onDuplicateMetric={state.duplicateMetric}
             onAddMetric={state.addMetric}
+            onReorderMetrics={state.reorderMetrics}
           />
         ) : (
           <PredictionsView />

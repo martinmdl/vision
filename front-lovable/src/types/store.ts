@@ -10,8 +10,8 @@ export interface Metric {
   category: string;
   value: string;
   change: number;
-  chartType: 'line' | 'bar' | 'pie' | 'area';
-  data: { name: string; value: number }[];
+  chartType: 'line' | 'bar' | 'pie' | 'area' | 'donut' | 'hbar' | 'candle' | 'radar' | 'radial';
+  data: { name: string; value: number; open?: number; close?: number; high?: number; low?: number }[];
 }
 
 export type ViewMode = 'metrics' | 'predictions';

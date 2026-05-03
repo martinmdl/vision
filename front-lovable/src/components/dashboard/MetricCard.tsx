@@ -1,7 +1,11 @@
-import { useState } from 'react';
 import { MoreHorizontal, Trash2, Copy, Settings, Filter, Download, BarChart3 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { AreaChart, Area, BarChart, Bar, LineChart, Line, ResponsiveContainer } from 'recharts';
+import {
+  AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
+  RadarChart, Radar, PolarGrid, PolarAngleAxis,
+  RadialBarChart, RadialBar,
+  ComposedChart, XAxis, YAxis, ResponsiveContainer,
+} from 'recharts';
 import type { Metric } from '@/types/store';
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
@@ -16,9 +20,80 @@ interface MetricCardProps {
 
 const CHART_COLOR = 'hsl(243, 75%, 59%)';
 const CHART_COLOR_GREEN = 'hsl(152, 69%, 41%)';
+const CHART_COLOR_RED = 'hsl(0, 72%, 51%)';
+const PIE_COLORS = ['hsl(243, 75%, 59%)', 'hsl(152, 69%, 41%)', 'hsl(38, 92%, 50%)', 'hsl(280, 65%, 60%)', 'hsl(199, 89%, 48%)'];
 
 function MiniChart({ data, type }: { data: Metric['data']; type: Metric['chartType'] }) {
   const color = type === 'bar' ? CHART_COLOR : CHART_COLOR_GREEN;
+
+  if (type === 'pie' || type === 'donut') {
+    return (
+      <ResponsiveContainer width="100%" height={80}>
+        <PieChart>
+          <Pie
+            data={data} dataKey="value" nameKey="name"
+            innerRadius={type === 'donut' ? 18 : 0}
+            outerRadius={32} paddingAngle={2}
+          >
+            {data.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
+          </Pie>
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === 'hbar') {
+    return (
+      <ResponsiveContainer width="100%" height={80}>
+        <BarChart data={data} layout="vertical" margin={{ left: 0, right: 0, top: 0, bottom: 0 }}>
+          <XAxis type="number" hide />
+          <YAxis type="category" dataKey="name" hide />
+          <Bar dataKey="value" fill={CHART_COLOR} radius={[0, 3, 3, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === 'candle') {
+    return (
+      <ResponsiveContainer width="100%" height={80}>
+        <ComposedChart data={data} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
+          <Bar dataKey={(d: any) => [d.low, d.high]} fill="hsl(220, 9%, 70%)" barSize={2} />
+          <Bar
+            dataKey={(d: any) => [d.open, d.close]}
+            barSize={8}
+            shape={(props: any) => {
+              const { x, y, width, height, payload } = props;
+              const fill = payload.close >= payload.open ? CHART_COLOR_GREEN : CHART_COLOR_RED;
+              return <rect x={x} y={y} width={width} height={Math.abs(height) || 1} fill={fill} rx={1} />;
+            }}
+          />
+        </ComposedChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === 'radar') {
+    return (
+      <ResponsiveContainer width="100%" height={90}>
+        <RadarChart data={data} outerRadius={36}>
+          <PolarGrid stroke="hsl(220, 13%, 91%)" />
+          <PolarAngleAxis dataKey="name" tick={{ fontSize: 8, fill: 'hsl(220, 9%, 46%)' }} />
+          <Radar dataKey="value" stroke={CHART_COLOR} fill={CHART_COLOR} fillOpacity={0.3} />
+        </RadarChart>
+      </ResponsiveContainer>
+    );
+  }
+
+  if (type === 'radial') {
+    return (
+      <ResponsiveContainer width="100%" height={80}>
+        <RadialBarChart innerRadius="60%" outerRadius="100%" data={data} startAngle={90} endAngle={-270}>
+          <RadialBar dataKey="value" cornerRadius={6} fill={CHART_COLOR} background={{ fill: 'hsl(220, 13%, 91%)' }} />
+        </RadialBarChart>
+      </ResponsiveContainer>
+    );
+  }
 
   return (
     <ResponsiveContainer width="100%" height={64}>
