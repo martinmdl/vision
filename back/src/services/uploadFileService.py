@@ -21,7 +21,7 @@ async def uploadFileService(file):
     print(f"  productos: {len(df_producto)} filas")
     print(f"  detalles: {len(df_detalle_venta)} filas")
     save_to_postgres(df_venta, "ventas", "id_venta")
-    save_to_postgres(df_producto, "productos", "nombre")
+    save_to_postgres(df_producto, "productos", "id_producto")
     save_to_postgres(df_detalle_venta, "detalle_ventas", "id_detalle")
     print(f"[1] clean + save BD: {time.time() - t0:.2f}s")
     

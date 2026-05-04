@@ -58,7 +58,14 @@ def clean_producto(df_producto):
         "Cantidad": "cantidad",
         "Total ($)": "total_ars"
     })
-    df_producto = df_producto[["nombre", "categoria", "cantidad", "total_ars", "creacion", "actualizacion", "activo"]]
+
+
+    # Crear PK incremental `id_producto` similar a otras tablas
+    df_producto = df_producto.reset_index(drop=True)
+    df_producto["id_producto"] = range(1, len(df_producto) + 1)
+
+    # Reordenar para tener la PK al principio
+    df_producto = df_producto[["id_producto", "nombre", "categoria", "cantidad", "total_ars", "creacion", "actualizacion", "activo"]]
     
     return df_producto
 
@@ -73,12 +80,14 @@ def clean_detalle_venta(df_detalle_venta, df_producto, df_venta):
 
     df_detalle_venta["Creación"] = pd.to_datetime(df_detalle_venta["Creación"])
 
-    mapa = dict(zip(df_producto["nombre"], df_producto["nombre"]))
+    # Mapear nombre de producto a la nueva PK `id_producto`
+    mapa = dict(zip(df_producto["nombre"], df_producto["id_producto"]))
     df_detalle_venta["id_producto"] = df_detalle_venta["Producto"].map(mapa)
     # Eliminar filas sin idProducto (productos no mapeados)
     df_detalle_venta = df_detalle_venta.dropna(subset=["id_producto"])
-    df_detalle_venta = df_detalle_venta.drop(columns=["Producto", "Categoría"])
     df_detalle_venta = df_detalle_venta.reset_index(drop=True) # Reindexar despues de dropna 
+    df_detalle_venta["id_producto"] = df_detalle_venta["id_producto"].astype(int)
+    df_detalle_venta = df_detalle_venta.drop(columns=["Producto", "Categoría"])
 
     df_detalle_venta["Cancelada"] = df_detalle_venta["Cancelada"].map({"Si": True, "No": False})
 

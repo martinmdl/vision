@@ -28,7 +28,7 @@ unifyDataFrameQuery = """
     FROM productos p
     CROSS JOIN fechas f
     LEFT JOIN detalle_ventas dv 
-    ON dv.id_producto = p.nombre 
+    ON dv.id_producto = p.id_producto 
     AND dv.creacion = f.creacion
     LEFT JOIN clima c
     ON c.fecha = f.creacion
@@ -40,7 +40,7 @@ unifyDataFrameQuery = """
 
 getDBLastYearQuery = "SELECT MAX(EXTRACT(YEAR FROM creacion)) FROM ventas"
 
-getDBProducts = "SELECT nombre FROM productos"
+getDBProducts = "SELECT id_producto, nombre FROM productos"
 
 getDBFeriados = """
     SELECT DISTINCT ON (fer.fecha)
