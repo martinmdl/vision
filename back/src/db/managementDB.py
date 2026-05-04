@@ -3,7 +3,13 @@ from sqlalchemy import Date, Table, MetaData, Column, Integer, String, Float, Bo
 from sqlalchemy.dialects.postgresql import insert
 from src.db.engine import engine
 from enum import Enum
-from src.db.querys import unifyDataFrameQuery, getDBLastYearQuery, getDBProducts, getDBFeriados
+from src.db.querys import (
+    unifyDataFrameQuery,
+    getDBLastYearQuery,
+    getDBProducts,
+    getDBFeriados,
+    getTopSoldProductsQuery,
+)
 
 metadata = MetaData()
 
@@ -147,4 +153,10 @@ def getProducts():
 def getHolidays():
     with engine.connect() as conn:
         result = conn.execute(text(getDBFeriados))
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getTopSoldProducts(limit=10):
+    with engine.connect() as conn:
+        result = conn.execute(text(getTopSoldProductsQuery), {"limit": limit})
         return pd.DataFrame(result.fetchall(), columns=result.keys())

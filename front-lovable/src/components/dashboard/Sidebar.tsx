@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Search, Plus, Upload, BarChart3, TrendingUp, Trash2, Info, Store as StoreIcon } from 'lucide-react';
+import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { Store, ViewMode } from '@/types/store';
+import type { Store } from '@/types/store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,13 +15,11 @@ interface SidebarProps {
   onSelectStore: (id: string) => void;
   onAddStore: (name: string) => void;
   onDeleteStore: (id: string) => void;
-  onViewChange: (mode: ViewMode) => void;
-  viewMode: ViewMode;
 }
 
 export default function Sidebar({
   stores, selectedStoreId, searchQuery, onSearchChange,
-  onSelectStore, onAddStore, onDeleteStore, onViewChange, viewMode,
+  onSelectStore, onAddStore, onDeleteStore,
 }: SidebarProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -92,20 +90,6 @@ export default function Sidebar({
                       type="button"
                     >
                       <Upload className="w-4 h-4" />
-                    </button>
-                    <button
-                      className={`p-1.5 rounded hover:bg-sidebar-fg/10 ${viewMode === 'metrics' && isSelected ? 'text-sidebar-accent' : ''}`}
-                      onClick={e => { e.stopPropagation(); onSelectStore(store.id); onViewChange('metrics'); }}
-                      title="Metricas"
-                    >
-                      <BarChart3 className="w-4 h-4" />
-                    </button>
-                    <button
-                      className={`p-1.5 rounded hover:bg-sidebar-fg/10 ${viewMode === 'predictions' && isSelected ? 'text-sidebar-accent' : ''}`}
-                      onClick={e => { e.stopPropagation(); onSelectStore(store.id); onViewChange('predictions'); }}
-                      title="Predicciones"
-                    >
-                      <TrendingUp className="w-4 h-4" />
                     </button>
                     <button
                       className="p-1.5 rounded hover:bg-destructive/20 hover:text-destructive"
@@ -182,8 +166,8 @@ export default function Sidebar({
           <div className="space-y-3 text-sm text-muted-foreground">
             <p><strong className="text-foreground">1. Agregar una tienda</strong> - Haz clic en "Agregar tienda" para crear una nueva sucursal.</p>
             <p><strong className="text-foreground">2. Subir datos</strong> - Usa el icono de carga para importar archivos Excel con ventas.</p>
-            <p><strong className="text-foreground">3. Ver metricas</strong> - Haz clic en el icono de grafico para ver los tableros.</p>
-            <p><strong className="text-foreground">4. Predicciones</strong> - Usa el icono de tendencia para ver pronosticos de demanda.</p>
+            <p><strong className="text-foreground">3. Ver metricas</strong> - Usa el selector de vista en el encabezado principal.</p>
+            <p><strong className="text-foreground">4. Predicciones</strong> - Cambia a "Predicciones" desde el encabezado principal.</p>
             <p><strong className="text-foreground">5. Personalizar</strong> - Agrega, elimina o configura tarjetas de metricas segun tu necesidad.</p>
           </div>
         </DialogContent>

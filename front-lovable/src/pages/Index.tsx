@@ -18,24 +18,20 @@ export default function Index() {
         onSelectStore={state.setSelectedStoreId}
         onAddStore={state.addStore}
         onDeleteStore={state.deleteStore}
-        onViewChange={state.setViewMode}
-        viewMode={state.viewMode}
       />
 
       <main className="flex-1 p-8 overflow-y-auto h-screen">
         <TopBar
-          gridColumns={state.gridColumns}
-          onGridChange={state.setGridColumns}
           dateRange={state.dateRange}
           onDateRangeChange={state.setDateRange}
           viewMode={state.viewMode}
+          onViewChange={state.setViewMode}
           storeName={selectedStore?.name || 'Selecciona una tienda'}
         />
 
         {state.viewMode === 'metrics' ? (
           <MetricsDashboard
             metrics={state.metrics}
-            gridColumns={state.gridColumns}
             onRemoveMetric={state.removeMetric}
             onDuplicateMetric={state.duplicateMetric}
             onAddMetric={state.addMetric}

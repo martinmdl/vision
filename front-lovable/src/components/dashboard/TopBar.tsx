@@ -1,19 +1,24 @@
-import { Columns2, LayoutList, Calendar } from 'lucide-react';
-import type { GridColumns, DateRange, ViewMode } from '@/types/store';
+import { Calendar, BarChart3, TrendingUp } from 'lucide-react';
+import type { DateRange, ViewMode } from '@/types/store';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 
 interface TopBarProps {
-  gridColumns: GridColumns;
-  onGridChange: (cols: GridColumns) => void;
   dateRange: DateRange;
   onDateRangeChange: (range: DateRange) => void;
   viewMode: ViewMode;
+  onViewChange: (mode: ViewMode) => void;
   storeName: string;
 }
 
-export default function TopBar({ gridColumns, onGridChange, dateRange, onDateRangeChange, viewMode, storeName }: TopBarProps) {
+export default function TopBar({
+  dateRange,
+  onDateRangeChange,
+  viewMode,
+  onViewChange,
+  storeName,
+}: TopBarProps) {
   return (
     <div className="flex items-center justify-between mb-6">
       <div>
@@ -22,22 +27,26 @@ export default function TopBar({ gridColumns, onGridChange, dateRange, onDateRan
       </div>
 
       <div className="flex items-center gap-3">
-        {viewMode === 'metrics' && (
-          <div className="flex items-center bg-muted rounded-lg p-0.5">
-            <button
-              onClick={() => onGridChange(1)}
-              className={`p-1.5 rounded-md transition-colors ${gridColumns === 1 ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-            >
-              <LayoutList className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => onGridChange(2)}
-              className={`p-1.5 rounded-md transition-colors ${gridColumns === 2 ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground'}`}
-            >
-              <Columns2 className="w-4 h-4" />
-            </button>
-          </div>
-        )}
+        <div className="flex items-center bg-muted rounded-lg p-0.5">
+          <button
+            onClick={() => onViewChange('metrics')}
+            className={`h-8 px-3 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
+              viewMode === 'metrics' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            type="button"
+          >
+            <BarChart3 className="w-3.5 h-3.5" /> Metricas
+          </button>
+          <button
+            onClick={() => onViewChange('predictions')}
+            className={`h-8 px-3 text-xs rounded-md transition-colors flex items-center gap-1.5 ${
+              viewMode === 'predictions' ? 'bg-card shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            type="button"
+          >
+            <TrendingUp className="w-3.5 h-3.5" /> Predicciones
+          </button>
+        </div>
 
         <div className="flex items-center gap-1.5">
           <Calendar className="w-4 h-4 text-muted-foreground" />

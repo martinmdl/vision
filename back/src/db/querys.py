@@ -54,3 +54,15 @@ getDBFeriados = """
         fer.fecha,
         CASE WHEN tf.tipo = 'efemeride' THEN 1 ELSE 2 END;
 """
+
+getTopSoldProductsQuery = """
+    SELECT
+        dv.id_producto AS nombre,
+        COALESCE(SUM(dv.cantidad), 0) AS total_vendido
+    FROM detalle_ventas dv
+    WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
+        AND (dv.activo IS NULL OR dv.activo = TRUE)
+    GROUP BY dv.id_producto
+    ORDER BY total_vendido DESC
+    LIMIT :limit;
+"""

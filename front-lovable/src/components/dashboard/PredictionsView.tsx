@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid,
-  Tooltip, ResponsiveContainer, Cell,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { TrendingUp, Calendar, Package, LayoutGrid, Table } from 'lucide-react';
+import { TrendingUp, Calendar, LayoutGrid, Table } from 'lucide-react';
 import { predict, type PredictionItem } from '@/api/services/mvp';
 
 const DAILY_DATA = [
@@ -15,19 +15,6 @@ const DAILY_DATA = [
   { day: 'Vie', predicted: 1580 },
   { day: 'Sab', predicted: 1820 },
   { day: 'Dom', predicted: 1440 },
-];
-
-const TOP_PRODUCTS = [
-  { name: 'Leche Organica 1L', demand: 342 },
-  { name: 'Pan de Masa Madre', demand: 298 },
-  { name: 'Huevos de Campo', demand: 276 },
-  { name: 'Paltas (x3)', demand: 251 },
-  { name: 'Yogur Griego', demand: 234 },
-  { name: 'Bananas (racimo)', demand: 218 },
-  { name: 'Pechuga de Pollo', demand: 203 },
-  { name: 'Agua con Gas', demand: 195 },
-  { name: 'Ensalada Mixta', demand: 187 },
-  { name: 'Salsa de Pasta', demand: 172 },
 ];
 
 const HEATMAP_DATA = [
@@ -194,7 +181,7 @@ export default function PredictionsView() {
             {[
               { icon: TrendingUp, label: 'Ventas Totales Predichas', value: totalPredicted.toLocaleString(), sub: 'Proximos 7 dias' },
               { icon: Calendar, label: 'Dia de Mayor Demanda', value: highestDay.day, sub: `${highestDay.predicted.toLocaleString()} unidades` },
-              { icon: Package, label: 'Producto Mas Demandado', value: TOP_PRODUCTS[0].name, sub: `${TOP_PRODUCTS[0].demand} unidades` },
+              { icon: Table, label: 'Productos en Analisis', value: String(heatmapData.length), sub: 'Incluidos en el mapa de calor' },
             ].map((kpi, i) => (
               <motion.div
                 key={i}
@@ -242,34 +229,8 @@ export default function PredictionsView() {
             </ResponsiveContainer>
           </div>
 
-          {/* Two-column: Top Products + Heatmap */}
-          <div className="grid grid-cols-2 gap-4">
-            {/* Top Products */}
-            <div className="bg-card rounded-xl border border-border shadow-card p-5">
-              <h3 className="text-sm font-semibold text-card-foreground mb-4">Top 10 Productos Predichos</h3>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={TOP_PRODUCTS} layout="vertical" margin={{ left: 80 }}>
-                  <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={75} />
-                  <Tooltip
-                    contentStyle={{
-                      background: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: 8,
-                      fontSize: 12,
-                    }}
-                  />
-                  <Bar dataKey="demand" radius={[0, 4, 4, 0]}>
-                    {TOP_PRODUCTS.map((_, i) => (
-                      <Cell key={i} fill={`hsl(var(--chart-${(i % 5) + 1}))`} fillOpacity={0.8} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-
-            {/* Heatmap */}
-            <div className="bg-card rounded-xl border border-border shadow-card p-5">
+          {/* Heatmap */}
+          <div className="bg-card rounded-xl border border-border shadow-card p-5">
               <h3 className="text-sm font-semibold text-card-foreground mb-4">Mapa de Calor de Demanda</h3>
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
@@ -297,7 +258,6 @@ export default function PredictionsView() {
                   </tbody>
                 </table>
               </div>
-            </div>
           </div>
         </>
       ) : (
@@ -316,7 +276,7 @@ export default function PredictionsView() {
                 </tr>
               </thead>
               <tbody>
-                {HEATMAP_DATA.map(row => {
+                {heatmapData.map(row => {
                   const total = DAYS.reduce((s, d) => s + (row[d] as number), 0);
                   return (
                     <tr key={row.product} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
