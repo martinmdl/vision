@@ -57,12 +57,14 @@ getDBFeriados = """
 
 getTopSoldProductsQuery = """
     SELECT
-        dv.id_producto AS nombre,
+        p.nombre AS nombre,
         COALESCE(SUM(dv.cantidad), 0) AS total_vendido
     FROM detalle_ventas dv
+    INNER JOIN productos as p
+    ON p.id_producto = dv.id_producto
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
-        AND (dv.activo IS NULL OR dv.activo = TRUE)
-    GROUP BY dv.id_producto
+    AND (dv.activo IS NULL OR dv.activo = TRUE)
+    GROUP BY p.nombre
     ORDER BY total_vendido DESC
     LIMIT :limit;
 """
