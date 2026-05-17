@@ -1,14 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
-    --background: 220 25% 97%;
+    --background: 220 20% 97%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -17,72 +15,50 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 221 83% 53%;
+    --primary: 243 75% 59%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96%;
+    --secondary: 220 14% 96%;
     --secondary-foreground: 222 47% 11%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 262 83% 58%;
+    --accent: 243 75% 59%;
     --accent-foreground: 0 0% 100%;
 
-    --success: 142 71% 45%;
-    --success-foreground: 0 0% 100%;
-
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 243 75% 59%;
 
     --radius: 0.75rem;
 
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(262 83% 58%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(220 25% 97%) 0%, hsl(220 20% 95%) 100%);
-    --shadow-glow: 0 10px 40px -10px hsl(221 83% 53% / 0.3);
-    --shadow-card: 0 4px 20px -2px hsl(222 47% 11% / 0.08);
-  }
+    --sidebar-bg: 228 33% 10%;
+    --sidebar-fg: 220 20% 80%;
+    --sidebar-fg-bright: 0 0% 97%;
+    --sidebar-accent: 243 75% 59%;
+    --sidebar-muted: 228 20% 18%;
+    --sidebar-border: 228 20% 16%;
 
-  .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
-
-    --card: 217 33% 17%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 217 33% 17%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 221 83% 53%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 262 83% 58%;
-    --accent-foreground: 0 0% 100%;
-
-    --success: 142 71% 45%;
+    --success: 152 69% 41%;
     --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
 
-    --destructive: 0 63% 31%;
-    --destructive-foreground: 210 40% 98%;
+    --chart-1: 243 75% 59%;
+    --chart-2: 152 69% 41%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 340 82% 52%;
+    --chart-5: 198 93% 60%;
 
-    --border: 217 33% 24%;
-    --input: 217 33% 24%;
-    --ring: 221 83% 53%;
+    --font-sans: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
 
-    --gradient-primary: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(262 83% 58%) 100%);
-    --gradient-subtle: linear-gradient(180deg, hsl(222 47% 11%) 0%, hsl(222 47% 14%) 100%);
-    --shadow-glow: 0 10px 40px -10px hsl(221 83% 53% / 0.4);
-    --shadow-card: 0 4px 20px -2px hsl(0 0% 0% / 0.3);
+    --shadow-card: 0 1px 3px 0 hsl(0 0% 0% / 0.04), 0 1px 2px -1px hsl(0 0% 0% / 0.04);
+    --shadow-card-hover: 0 4px 12px 0 hsl(0 0% 0% / 0.06), 0 2px 4px -1px hsl(0 0% 0% / 0.04);
   }
 }
 
@@ -90,42 +66,17 @@ All colors MUST be HSL.
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
   }
 }
 
 @layer utilities {
-  .gradient-primary {
-    background: var(--gradient-primary);
-  }
-  
-  .gradient-subtle {
-    background: var(--gradient-subtle);
-  }
-  
-  .shadow-glow {
-    box-shadow: var(--shadow-glow);
-  }
-  
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
-
-  .animate-fade-in {
-    animation: fadeIn 0.5s ease-in-out;
-  }
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .shadow-card-hover {
+    box-shadow: var(--shadow-card-hover);
   }
 }

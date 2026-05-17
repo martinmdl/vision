@@ -1,4 +1,8 @@
-node_modules
-dist
+.venv
+__pycache__
+*.pyc
+*.pyo
+*.pyd
 .git
 .gitignore
+catboost_info
