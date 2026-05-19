@@ -8,6 +8,7 @@ import {
   Filter,
   Download,
   BarChart3,
+  Info,
 } from 'lucide-react';
 import {
   AreaChart,
@@ -39,6 +40,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const CHART_COLOR = 'hsl(243, 75%, 59%)';
 const CHART_COLOR_GREEN = 'hsl(152, 69%, 41%)';
@@ -72,6 +78,7 @@ interface MetricCardProps {
   hasData?: boolean;
   loadingText?: string;
   emptyText?: string;
+  titleInfo?: string;
   children?: ReactNode;
 
   onRemove?: (id: string) => void;
@@ -219,6 +226,7 @@ export default function MetricCard(props: MetricCardProps) {
     hasData,
     loadingText = 'Cargando métrica...',
     emptyText = 'No hay datos para mostrar.',
+    titleInfo,
     children,
     onRemove,
     onDuplicate,
@@ -253,7 +261,25 @@ export default function MetricCard(props: MetricCardProps) {
             </span>
           )}
           <h3 className="text-sm font-semibold text-card-foreground">
-            {resolvedTitle}
+            <span className="inline-flex items-center gap-1.5">
+              <span>{resolvedTitle}</span>
+              {titleInfo && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      type="button"
+                      className="text-muted-foreground hover:text-foreground transition-colors"
+                      aria-label="Más información"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent className="max-w-xs text-xs">
+                    {titleInfo}
+                  </TooltipContent>
+                </Tooltip>
+              )}
+            </span>
           </h3>
         </div>
 

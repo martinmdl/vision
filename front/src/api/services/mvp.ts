@@ -79,7 +79,82 @@ export interface CategoryProfitabilityResponse {
   data?: CategoryProfitabilityItem[];
 }
 
+export interface UploadResponse {
+  status_code: number;
+  message: string;
+  data?: {
+    detail?: string;
+  };
+  detail?: string;
+}
+
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+
+type UploadProgressHandler = (progress: number) => void;
+type UploadStageHandler = (stage: string) => void;
+
+export async function uploadFile(
+  file: File,
+  onProgress?: UploadProgressHandler,
+  onStageChange?: UploadStageHandler,
+): Promise<UploadResponse> {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    const formData = new FormData();
+    formData.append('file', file);
+
+    onStageChange?.('Preparando archivo');
+    onProgress?.(5);
+
+    xhr.upload.onprogress = (event) => {
+      if (!event.lengthComputable) return;
+
+      const uploadRatio = event.loaded / event.total;
+      const progress = Math.min(85, Math.round(10 + uploadRatio * 75));
+      onStageChange?.('Subiendo archivo');
+      onProgress?.(progress);
+    };
+
+    xhr.onload = () => {
+      let payload: UploadResponse | null = null;
+
+      try {
+        payload = JSON.parse(xhr.responseText) as UploadResponse;
+      } catch {
+        payload = null;
+      }
+
+      onStageChange?.('Procesando datos');
+      onProgress?.(95);
+
+      if (payload && typeof payload.status_code === 'number') {
+        onStageChange?.('Completado');
+        onProgress?.(100);
+        resolve(payload);
+        return;
+      }
+
+      onStageChange?.('Completado');
+      onProgress?.(100);
+      resolve({
+        status_code: xhr.status >= 200 && xhr.status < 300 ? 200 : xhr.status,
+        message: xhr.status >= 200 && xhr.status < 300
+          ? 'Archivo subido correctamente.'
+          : 'No se pudo cargar el archivo.',
+      });
+    };
+
+    xhr.onerror = () => {
+      resolve({
+        status_code: 500,
+        message: 'No se pudo conectar con el backend.',
+      });
+    };
+
+    xhr.open('POST', `${API_BASE_URL}/load`);
+    xhr.send(formData);
+  });
+}
 
 export async function predict(): Promise<PredictResponse> {
   try {

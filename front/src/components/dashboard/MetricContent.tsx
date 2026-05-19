@@ -17,7 +17,7 @@ import type {
   WeatherImpactIncomeItem,
   CalendarImpactIncomeItem,
   CategoryProfitabilityItem,
-} from '@/api/services/mvp';
+} from '@/api/services/mvp.ts';
 
 interface TopProductsChartProps {
   data: TopSoldProductItem[];
@@ -44,6 +44,7 @@ interface RankingBarChartProps<T extends { name: string }> {
   valueKey: keyof T;
   tooltipLabel: string;
   valueFormatter?: (value: number) => string;
+  axisTickFormatter?: (value: number) => string;
 }
 
 function RankingBarChart<T extends { name: string }>({
@@ -51,6 +52,7 @@ function RankingBarChart<T extends { name: string }>({
   valueKey,
   tooltipLabel,
   valueFormatter,
+  axisTickFormatter,
 }: RankingBarChartProps<T>) {
   const formatter = valueFormatter ?? ((value: number) => `${value}`);
 
@@ -59,6 +61,7 @@ function RankingBarChart<T extends { name: string }>({
       <BarChart data={data} layout="vertical" margin={{ left: 80 }}>
         <XAxis
           type="number"
+          tickFormatter={axisTickFormatter}
           tick={{
             fontSize: 10,
             fill: 'hsl(var(--muted-foreground))',
@@ -120,6 +123,7 @@ export function TopProfitableProductsChart({
       data={data}
       valueKey="profit"
       tooltipLabel="Producto"
+      axisTickFormatter={(value) => `${(Number(value) / 1000).toLocaleString('es-AR', { maximumFractionDigits: 1 })} mil`}
       valueFormatter={(value) => `$${value.toLocaleString('es-AR', { maximumFractionDigits: 2 })}`}
     />
   );
@@ -140,6 +144,7 @@ export function WeatherImpactIncomeChart({
         />
 
         <YAxis
+          tickFormatter={(value) => `${(Number(value) / 1000).toLocaleString('es-AR', { maximumFractionDigits: 1 })} mil`}
           tick={{
             fontSize: 10,
             fill: 'hsl(var(--muted-foreground))',
@@ -184,6 +189,7 @@ export function CalendarImpactIncomeChart({
         />
 
         <YAxis
+          tickFormatter={(value) => `${(Number(value) / 1000).toLocaleString('es-AR', { maximumFractionDigits: 1 })} mil`}
           tick={{
             fontSize: 10,
             fill: 'hsl(var(--muted-foreground))',

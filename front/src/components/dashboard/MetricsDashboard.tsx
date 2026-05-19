@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Info, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -33,6 +33,11 @@ import {
   CalendarImpactIncomeChart,
   CategoryProfitabilityChart,
 } from './MetricContent';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface MetricsDashboardProps {
   metrics: Metric[];
@@ -44,11 +49,13 @@ interface MetricsDashboardProps {
 
 function UpliftKpiCard({
   title,
+  titleInfo,
   value,
   isLoading,
   error,
 }: {
   title: string;
+  titleInfo: string;
   value: number;
   isLoading: boolean;
   error: string;
@@ -64,7 +71,23 @@ function UpliftKpiCard({
   if (isLoading) {
     return (
       <div className="rounded-xl border border-border shadow-card p-5 bg-card">
-        <h3 className="text-sm font-semibold text-card-foreground mb-2">{title}</h3>
+        <h3 className="text-sm font-semibold text-card-foreground mb-2 inline-flex items-center gap-1.5">
+          <span>{title}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Más información"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-xs">
+              {titleInfo}
+            </TooltipContent>
+          </Tooltip>
+        </h3>
         <p className="text-xs text-muted-foreground">Cargando métrica...</p>
       </div>
     );
@@ -78,7 +101,23 @@ function UpliftKpiCard({
         borderColor,
       }}
     >
-      <h3 className="text-sm font-semibold text-card-foreground mb-3">{title}</h3>
+      <h3 className="text-sm font-semibold text-card-foreground mb-3 inline-flex items-center gap-1.5">
+        <span>{title}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Más información"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs text-xs">
+            {titleInfo}
+          </TooltipContent>
+        </Tooltip>
+      </h3>
       <div className="flex items-end gap-2">
         <span className="text-3xl font-bold text-card-foreground">{formatted}</span>
         <span className="text-xs text-card-foreground/75">vs dia normal</span>
@@ -275,6 +314,7 @@ export default function MetricsDashboard({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <UpliftKpiCard
           title="Incremento por feriado"
+          titleInfo="Tasa de aumento porcentual de ganancia en días festivos respecto a días normales."
           value={calendarUplift.holiday_uplift}
           isLoading={isLoadingCalendarUplift}
           error={calendarUpliftError}
@@ -282,6 +322,7 @@ export default function MetricsDashboard({
 
         <UpliftKpiCard
           title="Incremento por fin de semana"
+          titleInfo="Tasa de aumento porcentual de ganancia en fines de semana respecto a días normales."
           value={calendarUplift.weekend_uplift}
           isLoading={isLoadingCalendarUplift}
           error={calendarUpliftError}
@@ -289,6 +330,7 @@ export default function MetricsDashboard({
 
         <MetricCard
           title="Top 10 Productos más vendidos"
+          titleInfo="Ranking de los 10 productos con mayor demanda acumulada en el período analizado."
           isLoading={isLoadingTopProducts}
           error={topProductsError}
           hasData={topProducts.length > 0}
@@ -298,6 +340,7 @@ export default function MetricsDashboard({
 
         <MetricCard
           title="Top 10 Productos más rentables"
+          titleInfo="Ranking de los 10 productos con mayor ganancia total. Eje monetario expresado en miles de pesos."
           isLoading={isLoadingTopProfitableProducts}
           error={topProfitableProductsError}
           hasData={topProfitableProducts.length > 0}
@@ -307,6 +350,7 @@ export default function MetricsDashboard({
 
         <MetricCard
           title="Impacto de Clima Adverso"
+          titleInfo="Comparación mensual de ingresos entre días lluviosos y días despejados. Valores en miles de pesos."
           isLoading={isLoadingWeatherImpactIncome}
           error={weatherImpactIncomeError}
           hasData={weatherImpactIncome.length > 0}
@@ -316,6 +360,7 @@ export default function MetricsDashboard({
 
         <MetricCard
           title="Comparativa por Tipo de Dia"
+          titleInfo="Comparación mensual de ingresos entre días festivos, normales y de fin de semana. Valores en miles de pesos."
           isLoading={isLoadingCalendarImpactIncome}
           error={calendarImpactIncomeError}
           hasData={calendarImpactIncome.length > 0}
@@ -325,6 +370,7 @@ export default function MetricsDashboard({
 
         <MetricCard
           title="Rentabilidad por Categoria"
+          titleInfo="Distribución de la ganancia total por categoría de producto."
           isLoading={isLoadingCategoryProfitability}
           error={categoryProfitabilityError}
           hasData={categoryProfitability.length > 0}
