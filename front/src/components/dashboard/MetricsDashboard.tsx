@@ -18,17 +18,20 @@ import {
   getWeatherImpactIncome,
   getCalendarImpactIncome,
   getCalendarUplift,
+  getCategoryProfitability,
   type TopSoldProductItem,
   type TopProfitableProductItem,
   type WeatherImpactIncomeItem,
   type CalendarImpactIncomeItem,
   type CalendarUpliftItem,
+  type CategoryProfitabilityItem,
 } from '@/api/services/mvp.ts';
 import {
   TopProductsChart,
   TopProfitableProductsChart,
   WeatherImpactIncomeChart,
   CalendarImpactIncomeChart,
+  CategoryProfitabilityChart,
 } from './MetricContent';
 
 interface MetricsDashboardProps {
@@ -148,6 +151,10 @@ export default function MetricsDashboard({
   const [isLoadingCalendarImpactIncome, setIsLoadingCalendarImpactIncome] = useState(false);
   const [calendarImpactIncomeError, setCalendarImpactIncomeError] = useState('');
 
+  const [categoryProfitability, setCategoryProfitability] = useState<CategoryProfitabilityItem[]>([]);
+  const [isLoadingCategoryProfitability, setIsLoadingCategoryProfitability] = useState(false);
+  const [categoryProfitabilityError, setCategoryProfitabilityError] = useState('');
+
   const [calendarUplift, setCalendarUplift] = useState<CalendarUpliftItem>({
     holiday_uplift: 0,
     weekend_uplift: 0,
@@ -218,6 +225,15 @@ export default function MetricsDashboard({
       );
     };
 
+    const loadCategoryProfitability = async () => {
+      await loadRankingMetric(
+        getCategoryProfitability,
+        setCategoryProfitability,
+        setCategoryProfitabilityError,
+        setIsLoadingCategoryProfitability,
+      );
+    };
+
     const loadCalendarUplift = async () => {
       setIsLoadingCalendarUplift(true);
       setCalendarUpliftError('');
@@ -240,6 +256,7 @@ export default function MetricsDashboard({
     loadWeatherImpactIncome();
     loadCalendarImpactIncome();
     loadCalendarUplift();
+    loadCategoryProfitability();
 
     return () => {
       mounted = false;
@@ -304,6 +321,15 @@ export default function MetricsDashboard({
           hasData={calendarImpactIncome.length > 0}
         >
           <CalendarImpactIncomeChart data={calendarImpactIncome} />
+        </MetricCard>
+
+        <MetricCard
+          title="Rentabilidad por Categoria"
+          isLoading={isLoadingCategoryProfitability}
+          error={categoryProfitabilityError}
+          hasData={categoryProfitability.length > 0}
+        >
+          <CategoryProfitabilityChart data={categoryProfitability} />
         </MetricCard>
       </div>
 

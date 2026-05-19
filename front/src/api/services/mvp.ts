@@ -38,6 +38,11 @@ export interface CalendarUpliftItem {
   weekend_uplift: number;
 }
 
+export interface CategoryProfitabilityItem {
+  name: string;
+  profit: number;
+}
+
 export interface TopSoldProductsResponse {
   status_code: number;
   message: string;
@@ -66,6 +71,12 @@ export interface CalendarUpliftResponse {
   status_code: number;
   message: string;
   data?: CalendarUpliftItem;
+}
+
+export interface CategoryProfitabilityResponse {
+  status_code: number;
+  message: string;
+  data?: CategoryProfitabilityItem[];
 }
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
@@ -229,6 +240,34 @@ export async function getCalendarUplift(): Promise<CalendarUpliftResponse> {
       status_code: response.ok ? 200 : response.status,
       message: response.ok ? 'Incrementos por tipo de dia obtenidos' : 'Error al obtener incrementos por tipo de dia',
       data: payload?.data,
+    };
+  } catch {
+    return {
+      status_code: 500,
+      message: 'No se pudo conectar con el backend.',
+    };
+  }
+}
+
+export async function getCategoryProfitability(): Promise<CategoryProfitabilityResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/metrics/category-profitability`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const payload = await response.json();
+
+    if (typeof payload?.status_code === 'number') {
+      return payload as CategoryProfitabilityResponse;
+    }
+
+    return {
+      status_code: response.ok ? 200 : response.status,
+      message: response.ok ? 'Rentabilidad por categoria obtenida' : 'Error al obtener rentabilidad por categoria',
+      data: Array.isArray(payload?.data) ? payload.data : undefined,
     };
   } catch {
     return {

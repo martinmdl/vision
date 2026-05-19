@@ -184,3 +184,16 @@ getCalendarUpliftQuery = """
         COALESCE(((ingreso_fin_semana - ingreso_normal) / NULLIF(ingreso_normal, 0)) * 100, 0) AS incremento_fin_semana
     FROM promedios;
 """
+
+getCategoryProfitabilityQuery = """
+    SELECT
+        COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria') AS categoria,
+        COALESCE(SUM(COALESCE(dv.cantidad, 0) * (COALESCE(dv.precio, 0) - COALESCE(dv.costo, 0))), 0) AS total_ganancia
+    FROM detalle_ventas dv
+    INNER JOIN productos p
+        ON p.id_producto = dv.id_producto
+    WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
+        AND (dv.activo IS NULL OR dv.activo = TRUE)
+    GROUP BY COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria')
+    ORDER BY total_ganancia DESC;
+"""

@@ -13,6 +13,7 @@ from src.db.querys import (
     getWeatherImpactIncomeQuery,
     getCalendarImpactIncomeQuery,
     getCalendarUpliftQuery,
+    getCategoryProfitabilityQuery,
 )
 
 metadata = MetaData()
@@ -188,4 +189,10 @@ def getCalendarImpactIncome():
 def getCalendarUplift():
     with engine.connect() as conn:
         result = conn.execute(text(getCalendarUpliftQuery))
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getCategoryProfitability():
+    with engine.connect() as conn:
+        result = conn.execute(text(getCategoryProfitabilityQuery))
         return pd.DataFrame(result.fetchall(), columns=result.keys())

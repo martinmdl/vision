@@ -4,6 +4,7 @@ from ..db.managementDB import (
     getWeatherImpactIncome,
     getCalendarImpactIncome,
     getCalendarUplift,
+    getCategoryProfitability,
 )
 
 
@@ -75,3 +76,16 @@ async def get_calendar_uplift():
         "holiday_uplift": float(row["incremento_feriado"] or 0),
         "weekend_uplift": float(row["incremento_fin_semana"] or 0),
     }
+
+
+async def get_category_profitability():
+    df_category = getCategoryProfitability()
+
+    profitability = []
+    for _, row in df_category.iterrows():
+        profitability.append({
+            "name": row["categoria"],
+            "profit": float(row["total_ganancia"] or 0),
+        })
+
+    return profitability

@@ -5,6 +5,7 @@ from ..services.metricsService import (
     get_weather_impact_income,
     get_calendar_impact_income,
     get_calendar_uplift,
+    get_category_profitability,
 )
 
 router = APIRouter(prefix="", tags=["Metrics"])
@@ -81,6 +82,22 @@ async def calendar_uplift():
         return {
             "status_code": 200,
             "message": "Incrementos por tipo de dia obtenidos",
+            "data": data,
+        }
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "message": f"Error interno del servidor: {str(e)}",
+        }
+
+
+@router.get("/metrics/category-profitability")
+async def category_profitability():
+    try:
+        data = await get_category_profitability()
+        return {
+            "status_code": 200,
+            "message": "Rentabilidad por categoria obtenida",
             "data": data,
         }
     except Exception as e:

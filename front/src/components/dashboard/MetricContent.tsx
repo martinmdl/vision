@@ -7,6 +7,8 @@ import {
   Tooltip,
   Cell,
   Legend,
+  PieChart,
+  Pie,
 } from 'recharts';
 
 import type {
@@ -14,6 +16,7 @@ import type {
   TopProfitableProductItem,
   WeatherImpactIncomeItem,
   CalendarImpactIncomeItem,
+  CategoryProfitabilityItem,
 } from '@/api/services/mvp';
 
 interface TopProductsChartProps {
@@ -30,6 +33,10 @@ interface WeatherImpactIncomeChartProps {
 
 interface CalendarImpactIncomeChartProps {
   data: CalendarImpactIncomeItem[];
+}
+
+interface CategoryProfitabilityChartProps {
+  data: CategoryProfitabilityItem[];
 }
 
 interface RankingBarChartProps<T extends { name: string }> {
@@ -203,6 +210,52 @@ export function CalendarImpactIncomeChart({
         <Bar dataKey="normal_income" name="Dia Normal" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
         <Bar dataKey="weekend_income" name="Fin de Semana" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
       </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function CategoryProfitabilityChart({
+  data,
+}: CategoryProfitabilityChartProps) {
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <PieChart>
+        <Pie
+          data={data}
+          dataKey="profit"
+          nameKey="name"
+          cx="50%"
+          cy="50%"
+          outerRadius={92}
+          paddingAngle={2}
+          stroke="hsl(var(--background))"
+          strokeWidth={2}
+        >
+          {data.map((_, i) => (
+            <Cell
+              key={i}
+              fill={`hsl(var(--chart-${(i % 5) + 1}))`}
+              fillOpacity={0.9}
+            />
+          ))}
+        </Pie>
+
+        <Tooltip
+          formatter={(value: number) => `$${Number(value).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`}
+          contentStyle={{
+            background: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+        />
+
+        <Legend
+          wrapperStyle={{
+            fontSize: 11,
+          }}
+        />
+      </PieChart>
     </ResponsiveContainer>
   );
 }
