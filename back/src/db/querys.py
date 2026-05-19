@@ -68,3 +68,36 @@ getTopSoldProductsQuery = """
     ORDER BY total_vendido DESC
     LIMIT :limit;
 """
+
+listSucursalesAllQuery = """
+    SELECT id_sucursal, nombre, activo, creacion, actualizacion
+    FROM sucursal
+    ORDER BY id_sucursal;
+"""
+
+listSucursalesActivasQuery = """
+    SELECT id_sucursal, nombre, activo, creacion, actualizacion
+    FROM sucursal
+    WHERE activo = true
+    ORDER BY id_sucursal;
+"""
+
+createSucursalQuery = """
+    INSERT INTO sucursal (nombre, creacion, actualizacion, activo)
+    VALUES (:nombre, NOW(), NOW(), true)
+    RETURNING id_sucursal;
+"""
+
+updateSucursalNombreQuery = """
+    UPDATE sucursal
+    SET nombre = :nombre,
+        actualizacion = NOW()
+    WHERE id_sucursal = :id;
+"""
+
+updateSucursalActivoQuery = """
+    UPDATE sucursal
+    SET activo = :activo,
+        actualizacion = NOW()
+    WHERE id_sucursal = :id;
+"""

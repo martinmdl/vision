@@ -18,6 +18,7 @@ export default function Index() {
         onSelectStore={state.setSelectedStoreId}
         onAddStore={state.addStore}
         onDeleteStore={state.deleteStore}
+        onEditStore={state.editStoreName}
       />
 
       <main className="flex-1 p-8 overflow-y-auto h-screen">

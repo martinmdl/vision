@@ -1,5 +1,5 @@
 import pandas as pd
-from sqlalchemy import Date, Table, MetaData, Column, Integer, String, Float, Boolean, ForeignKey, text, Date
+from sqlalchemy import Date, DateTime, Table, MetaData, Column, Integer, String, Float, Boolean, ForeignKey, text, Date
 from sqlalchemy.dialects.postgresql import insert
 from src.db.engine import engine
 from enum import Enum
@@ -9,13 +9,28 @@ from src.db.querys import (
     getDBProducts,
     getDBFeriados,
     getTopSoldProductsQuery,
+    listSucursalesAllQuery,
+    listSucursalesActivasQuery,
+    createSucursalQuery,
+    updateSucursalNombreQuery,
+    updateSucursalActivoQuery,
 )
 
 metadata = MetaData()
 
+sucursal = Table(
+    "sucursal", metadata,
+    Column("id_sucursal", Integer, primary_key=True),
+    Column("nombre", String),
+    Column("creacion", Date),
+    Column("actualizacion", Date),
+    Column("activo", Boolean)
+)
+
 ventas = Table(
     "ventas", metadata,
     Column("id_venta", Integer, primary_key=True),
+    Column("id_sucursal", Integer, ForeignKey("sucursal.id_sucursal")),
     Column("total", Float),
     Column("tipo", String),
     Column("creacion", Date), 
@@ -26,6 +41,7 @@ ventas = Table(
 productos = Table(
     "productos", metadata,
     Column("id_producto", Integer, primary_key=True),
+    Column("id_sucursal", Integer, ForeignKey("sucursal.id_sucursal")),
     Column("nombre", String),
     Column("categoria", String),
     Column("cantidad", Integer),
@@ -89,6 +105,7 @@ class TableEnum(Enum):
     ventas = ("ventas", ventas)
     productos = ("productos", productos)
     detalle_ventas = ("detalle_ventas", detalle_ventas)
+    sucursal = ("sucursal", sucursal)
     clima = ("clima", clima)
     tipo_feriado = ("tipo_feriado", tipo_feriado)
     feriado = ("feriado", feriado)
@@ -161,3 +178,26 @@ def getTopSoldProducts(limit=10):
     with engine.connect() as conn:
         result = conn.execute(text(getTopSoldProductsQuery), {"limit": limit})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getSucursales(all_items=False):
+    query = listSucursalesAllQuery if all_items else listSucursalesActivasQuery
+    with engine.connect() as conn:
+        result = conn.execute(text(query))
+        return [dict(row._mapping) for row in result.fetchall()]
+
+
+def createSucursal(nombre):
+    with engine.begin() as conn:
+        result = conn.execute(text(createSucursalQuery), {"nombre": nombre})
+        return result.scalar()
+
+
+def updateSucursalNombre(id_sucursal, nombre):
+    with engine.begin() as conn:
+        conn.execute(text(updateSucursalNombreQuery), {"id": id_sucursal, "nombre": nombre})
+
+
+def updateSucursalActivo(id_sucursal, activo):
+    with engine.begin() as conn:
+        conn.execute(text(updateSucursalActivoQuery), {"id": id_sucursal, "activo": activo})

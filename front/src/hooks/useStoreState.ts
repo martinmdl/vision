@@ -1,5 +1,6 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Store, Metric, ViewMode, GridColumns, DateRange } from '@/types/store';
+import { listStores, createStore, updateStoreName, setStoreActivo } from '@/api/services/stores';
 
 const SAMPLE_DATA = [
   { name: 'Lun', value: 420 },
@@ -28,11 +29,7 @@ const CANDLE_DATA = [
   { name: 'S', value: 0, open: 620, close: 600, high: 635, low: 590 },
 ];
 
-const INITIAL_STORES: Store[] = [
-  { id: '1', name: 'Sucursal Centro', files: ['ventas_enero.xlsx'] },
-  { id: '2', name: 'Sucursal Aeropuerto', files: [] },
-  { id: '3', name: 'Sucursal Puerto', files: ['reporte_q4.xlsx', 'inventario.xlsx'] },
-];
+const INITIAL_STORES: Store[] = [];
 
 const INITIAL_METRICS: Metric[] = [
   { id: 'm1', title: 'Ingresos Totales', category: 'finance', value: '$48,290', change: 12.5, chartType: 'area', data: SAMPLE_DATA },
@@ -50,25 +47,72 @@ const INITIAL_METRICS: Metric[] = [
   ]},
 ];
 
+const SELECTED_STORE_KEY = 'vision:selectedStoreId';
+
 export function useStoreState() {
+  const initialSelectedStoreId = typeof window === 'undefined'
+    ? '1'
+    : window.localStorage.getItem(SELECTED_STORE_KEY) || '1';
+
   const [stores, setStores] = useState<Store[]>(INITIAL_STORES);
-  const [selectedStoreId, setSelectedStoreId] = useState<string>('1');
+  const [selectedStoreId, setSelectedStoreId] = useState<string>(initialSelectedStoreId);
   const [viewMode, setViewMode] = useState<ViewMode>('metrics');
   const [gridColumns, setGridColumns] = useState<GridColumns>(2);
   const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [metrics, setMetrics] = useState<Metric[]>(INITIAL_METRICS);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const addStore = useCallback((name: string) => {
-    const newStore: Store = { id: Date.now().toString(), name, files: [] };
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    window.localStorage.setItem(SELECTED_STORE_KEY, selectedStoreId);
+  }, [selectedStoreId]);
+
+  // Cargar tiendas desde backend al iniciar
+  useEffect(() => {
+    let mounted = true
+    ;(async () => {
+      const data = await listStores()
+      if (!mounted) return
+      if (data) {
+        // mapear campos del backend a Store
+        const mapped = data.map(d => ({ id: String(d.id_sucursal), name: d.nombre, files: [] }))
+        setStores(mapped)
+        if (mapped.length > 0) {
+          const persistedStore = mapped.find(store => store.id === initialSelectedStoreId);
+          setSelectedStoreId(persistedStore?.id || mapped[0].id);
+        }
+      }
+    })()
+    return () => { mounted = false }
+  }, [])
+
+  const addStore = useCallback(async (name: string) => {
+    const res = await createStore(name);
+
+    if (!res?.id_sucursal) {
+      return;
+    }
+
+    const newStore: Store = { id: String(res.id_sucursal), name, files: [] };
     setStores(prev => [...prev, newStore]);
     setSelectedStoreId(newStore.id);
   }, []);
 
-  const deleteStore = useCallback((id: string) => {
-    setStores(prev => prev.filter(s => s.id !== id));
-    setSelectedStoreId(prev => prev === id ? stores[0]?.id || '' : prev);
+  const deleteStore = useCallback(async (id: string) => {
+    const ok = await setStoreActivo(Number(id), false);
+    if (ok) {
+      setStores(prev => prev.filter(s => s.id !== id));
+      setSelectedStoreId(prev => prev === id ? (stores[0]?.id || '') : prev);
+    }
   }, [stores]);
+
+  const editStoreName = useCallback(async (id: string, nombre: string) => {
+    const ok = await updateStoreName(Number(id), nombre);
+    if (ok) {
+      setStores(prev => prev.map(s => s.id === id ? { ...s, name: nombre } : s));
+    }
+  }, []);
 
   const addMetric = useCallback((title: string, category: string) => {
     const newMetric: Metric = {
@@ -114,6 +158,7 @@ export function useStoreState() {
   return {
     stores: filteredStores,
     allStores: stores,
+    editStoreName,
     selectedStoreId,
     setSelectedStoreId,
     viewMode,

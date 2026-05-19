@@ -23,6 +23,39 @@ export interface TopSoldProductsResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
+export async function uploadFile(file: File, idSucursal?: string | null) {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (idSucursal) {
+      formData.append('id_sucursal', idSucursal);
+    }
+
+    const response = await fetch(`${API_BASE_URL}/load`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const payload = await response.json();
+
+    if (typeof payload?.status_code === 'number') {
+      return payload;
+    }
+
+    return {
+      status_code: response.ok ? 200 : response.status,
+      message: response.ok ? 'Archivo cargado correctamente' : 'Error al cargar el archivo',
+      data: payload?.data,
+    };
+  } catch {
+    return {
+      status_code: 500,
+      message: 'No se pudo conectar con el backend.',
+    };
+  }
+}
+
 export async function predict(): Promise<PredictResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/predict`, {

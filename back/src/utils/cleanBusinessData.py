@@ -2,7 +2,7 @@ import pandas as pd
 import uuid
 import time
 
-def clean_xls(xls_file):
+def clean_xls(xls_file, id_sucursal=None):
     t0 = time.time()
     df_venta = pd.read_excel(xls_file, sheet_name="Ventas", skiprows=3)
     df_producto = pd.read_excel(xls_file, sheet_name="Productos")
@@ -13,6 +13,11 @@ def clean_xls(xls_file):
     df_venta = clean_venta(df_venta)
     df_producto = clean_producto(df_producto)
     df_detalle_venta = clean_detalle_venta(df_detalle_venta, df_producto, df_venta)
+
+    if id_sucursal is not None:
+        df_venta["id_sucursal"] = id_sucursal
+        df_producto["id_sucursal"] = id_sucursal
+
     print(f"  [1b] clean: {time.time() - t1:.2f}s")
 
     return df_venta, df_producto, df_detalle_venta

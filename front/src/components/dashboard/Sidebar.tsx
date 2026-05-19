@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon } from 'lucide-react';
+import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Store } from '@/types/store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -15,11 +15,12 @@ interface SidebarProps {
   onSelectStore: (id: string) => void;
   onAddStore: (name: string) => void;
   onDeleteStore: (id: string) => void;
+  onEditStore?: (id: string, nombre: string) => void;
 }
 
 export default function Sidebar({
   stores, selectedStoreId, searchQuery, onSearchChange,
-  onSelectStore, onAddStore, onDeleteStore,
+  onSelectStore, onAddStore, onDeleteStore, onEditStore,
 }: SidebarProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
@@ -90,6 +91,14 @@ export default function Sidebar({
                       type="button"
                     >
                       <Upload className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="p-1.5 rounded hover:bg-sidebar-fg/10"
+                      title="Editar nombre"
+                      onClick={e => { e.stopPropagation(); const newName = window.prompt('Nuevo nombre de la sucursal', store.name); if (newName && onEditStore) onEditStore(store.id, newName); }}
+                      type="button"
+                    >
+                      <Edit className="w-4 h-4" />
                     </button>
                     <button
                       className="p-1.5 rounded hover:bg-destructive/20 hover:text-destructive"
@@ -173,7 +182,7 @@ export default function Sidebar({
         </DialogContent>
       </Dialog>
 
-      <UploadDataModal open={showUploadModal} onOpenChange={setShowUploadModal} />
+      <UploadDataModal open={showUploadModal} onOpenChange={setShowUploadModal} storeId={selectedStoreId} />
     </>
   );
 }
