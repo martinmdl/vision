@@ -16,11 +16,20 @@ import {
   getTopSoldProducts,
   getTopProfitableProducts,
   getWeatherImpactIncome,
+  getCalendarImpactIncome,
+  getCalendarUplift,
   type TopSoldProductItem,
   type TopProfitableProductItem,
   type WeatherImpactIncomeItem,
+  type CalendarImpactIncomeItem,
+  type CalendarUpliftItem,
 } from '@/api/services/mvp.ts';
-import { TopProductsChart, TopProfitableProductsChart, WeatherImpactIncomeChart } from './MetricContent';
+import {
+  TopProductsChart,
+  TopProfitableProductsChart,
+  WeatherImpactIncomeChart,
+  CalendarImpactIncomeChart,
+} from './MetricContent';
 
 interface MetricsDashboardProps {
   metrics: Metric[];
@@ -28,6 +37,51 @@ interface MetricsDashboardProps {
   onDuplicateMetric: (id: string) => void;
   onAddMetric: (title: string, category: string) => void;
   onReorderMetrics: (fromId: string, toId: string) => void;
+}
+
+function UpliftKpiCard({
+  title,
+  value,
+  isLoading,
+  error,
+}: {
+  title: string;
+  value: number;
+  isLoading: boolean;
+  error: string;
+}) {
+  const formatted = `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  const normalized = Math.max(0, Math.min(1, (value + 20) / 40));
+  const hue = 48 + (120 - 48) * normalized;
+  const backgroundColor = `hsl(${hue} 85% 84% / 0.95)`;
+  const borderColor = `hsl(${hue} 52% 58% / 0.75)`;
+
+  if (error) return null;
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border shadow-card p-5 bg-card">
+        <h3 className="text-sm font-semibold text-card-foreground mb-2">{title}</h3>
+        <p className="text-xs text-muted-foreground">Cargando métrica...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-xl border shadow-card hover:shadow-card-hover transition-shadow p-5"
+      style={{
+        backgroundColor,
+        borderColor,
+      }}
+    >
+      <h3 className="text-sm font-semibold text-card-foreground mb-3">{title}</h3>
+      <div className="flex items-end gap-2">
+        <span className="text-3xl font-bold text-card-foreground">{formatted}</span>
+        <span className="text-xs text-card-foreground/75">vs dia normal</span>
+      </div>
+    </div>
+  );
 }
 
 function SortableMetric({
@@ -90,6 +144,17 @@ export default function MetricsDashboard({
   const [isLoadingWeatherImpactIncome, setIsLoadingWeatherImpactIncome] = useState(false);
   const [weatherImpactIncomeError, setWeatherImpactIncomeError] = useState('');
 
+  const [calendarImpactIncome, setCalendarImpactIncome] = useState<CalendarImpactIncomeItem[]>([]);
+  const [isLoadingCalendarImpactIncome, setIsLoadingCalendarImpactIncome] = useState(false);
+  const [calendarImpactIncomeError, setCalendarImpactIncomeError] = useState('');
+
+  const [calendarUplift, setCalendarUplift] = useState<CalendarUpliftItem>({
+    holiday_uplift: 0,
+    weekend_uplift: 0,
+  });
+  const [isLoadingCalendarUplift, setIsLoadingCalendarUplift] = useState(false);
+  const [calendarUpliftError, setCalendarUpliftError] = useState('');
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   useEffect(() => {
@@ -144,9 +209,37 @@ export default function MetricsDashboard({
       );
     };
 
+    const loadCalendarImpactIncome = async () => {
+      await loadRankingMetric(
+        getCalendarImpactIncome,
+        setCalendarImpactIncome,
+        setCalendarImpactIncomeError,
+        setIsLoadingCalendarImpactIncome,
+      );
+    };
+
+    const loadCalendarUplift = async () => {
+      setIsLoadingCalendarUplift(true);
+      setCalendarUpliftError('');
+
+      const response = await getCalendarUplift();
+      if (!mounted) return;
+
+      if (response.status_code === 200 && response.data) {
+        setCalendarUplift(response.data);
+      } else {
+        setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 });
+        setCalendarUpliftError(response.message || 'No se pudo obtener la metrica.');
+      }
+
+      setIsLoadingCalendarUplift(false);
+    };
+
     loadTopProducts();
     loadTopProfitableProducts();
     loadWeatherImpactIncome();
+    loadCalendarImpactIncome();
+    loadCalendarUplift();
 
     return () => {
       mounted = false;
@@ -163,6 +256,20 @@ export default function MetricsDashboard({
   return (
     <>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <UpliftKpiCard
+          title="Incremento por feriado"
+          value={calendarUplift.holiday_uplift}
+          isLoading={isLoadingCalendarUplift}
+          error={calendarUpliftError}
+        />
+
+        <UpliftKpiCard
+          title="Incremento por fin de semana"
+          value={calendarUplift.weekend_uplift}
+          isLoading={isLoadingCalendarUplift}
+          error={calendarUpliftError}
+        />
+
         <MetricCard
           title="Top 10 Productos más vendidos"
           isLoading={isLoadingTopProducts}
@@ -188,6 +295,15 @@ export default function MetricsDashboard({
           hasData={weatherImpactIncome.length > 0}
         >
           <WeatherImpactIncomeChart data={weatherImpactIncome} />
+        </MetricCard>
+
+        <MetricCard
+          title="Comparativa por Tipo de Dia"
+          isLoading={isLoadingCalendarImpactIncome}
+          error={calendarImpactIncomeError}
+          hasData={calendarImpactIncome.length > 0}
+        >
+          <CalendarImpactIncomeChart data={calendarImpactIncome} />
         </MetricCard>
       </div>
 

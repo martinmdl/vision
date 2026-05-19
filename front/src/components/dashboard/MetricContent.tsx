@@ -13,6 +13,7 @@ import type {
   TopSoldProductItem,
   TopProfitableProductItem,
   WeatherImpactIncomeItem,
+  CalendarImpactIncomeItem,
 } from '@/api/services/mvp';
 
 interface TopProductsChartProps {
@@ -25,6 +26,10 @@ interface TopProfitableProductsChartProps {
 
 interface WeatherImpactIncomeChartProps {
   data: WeatherImpactIncomeItem[];
+}
+
+interface CalendarImpactIncomeChartProps {
+  data: CalendarImpactIncomeItem[];
 }
 
 interface RankingBarChartProps<T extends { name: string }> {
@@ -152,6 +157,51 @@ export function WeatherImpactIncomeChart({
 
         <Bar dataKey="rainy_income" name="Dia Lluvioso" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
         <Bar dataKey="clear_income" name="Dia Despejado" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
+export function CalendarImpactIncomeChart({
+  data,
+}: CalendarImpactIncomeChartProps) {
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data} margin={{ left: 10, right: 10 }}>
+        <XAxis
+          dataKey="month"
+          tick={{
+            fontSize: 10,
+            fill: 'hsl(var(--muted-foreground))',
+          }}
+        />
+
+        <YAxis
+          tick={{
+            fontSize: 10,
+            fill: 'hsl(var(--muted-foreground))',
+          }}
+        />
+
+        <Tooltip
+          formatter={(value: number) => `$${Number(value).toLocaleString('es-AR', { maximumFractionDigits: 2 })}`}
+          contentStyle={{
+            background: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+        />
+
+        <Legend
+          wrapperStyle={{
+            fontSize: 11,
+          }}
+        />
+
+        <Bar dataKey="festive_income" name="Festivo/Feriado/Efemeride" fill="hsl(var(--chart-1))" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="normal_income" name="Dia Normal" fill="hsl(var(--chart-2))" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="weekend_income" name="Fin de Semana" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
   );

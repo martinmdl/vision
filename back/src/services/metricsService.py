@@ -1,4 +1,10 @@
-from ..db.managementDB import getTopSoldProducts, getTopProfitableProducts, getWeatherImpactIncome
+from ..db.managementDB import (
+    getTopSoldProducts,
+    getTopProfitableProducts,
+    getWeatherImpactIncome,
+    getCalendarImpactIncome,
+    getCalendarUplift,
+)
 
 
 async def get_top_sold_products(limit=10):
@@ -39,3 +45,33 @@ async def get_weather_impact_income():
         })
 
     return weather_impact
+
+
+async def get_calendar_impact_income():
+    df_calendar = getCalendarImpactIncome()
+
+    calendar_impact = []
+    for _, row in df_calendar.iterrows():
+        calendar_impact.append({
+            "month": row["mes"],
+            "festive_income": float(row["ingreso_festivo"] or 0),
+            "normal_income": float(row["ingreso_normal"] or 0),
+            "weekend_income": float(row["ingreso_fin_semana"] or 0),
+        })
+
+    return calendar_impact
+
+
+async def get_calendar_uplift():
+    df_uplift = getCalendarUplift()
+    if df_uplift.empty:
+        return {
+            "holiday_uplift": 0.0,
+            "weekend_uplift": 0.0,
+        }
+
+    row = df_uplift.iloc[0]
+    return {
+        "holiday_uplift": float(row["incremento_feriado"] or 0),
+        "weekend_uplift": float(row["incremento_fin_semana"] or 0),
+    }
