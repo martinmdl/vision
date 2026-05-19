@@ -39,7 +39,7 @@ export default function Index() {
             onReorderMetrics={state.reorderMetrics}
           />
         ) : (
-          <PredictionsView />
+          <PredictionsView selectedStoreId={state.selectedStoreId} />
         )}
       </main>
     </div>

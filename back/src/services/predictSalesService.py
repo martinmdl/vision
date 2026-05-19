@@ -1,17 +1,17 @@
 from catboost import CatBoostRegressor
 import requests
 import pandas as pd
-from ..db.managementDB import getDataForML, getHolidays, getProducts
+from ..db.managementDB import getHolidays, getProducts
 from ..utils.weather import obtener_clima_proximos_dias
 
-async def predecir_7_dias():
+async def predecir_7_dias(id_sucursal):
 
     model = CatBoostRegressor()
     model.load_model("src/model/catboost_model.cbm") 
 
-    df_products = getProducts()
+    df_products = getProducts(id_sucursal)
     features = [
-        "nombre", "temp_avg", "temp_min", "temp_max", "humedad", "lluvia", "viento", "presion", "nubosidad", "feriado", "tipo_feriado", "dia_semana", "mes"
+        "id_sucursal", "nombre", "temp_avg", "temp_min", "temp_max", "humedad", "lluvia", "viento", "presion", "nubosidad", "feriado", "tipo_feriado", "dia_semana", "mes"
     ]
     df_forecast = await obtener_clima_proximos_dias()
     df_forecast["fecha"] = pd.to_datetime(df_forecast["fecha"])
@@ -23,6 +23,7 @@ async def predecir_7_dias():
             [nombre, tipo_feriado] = buscar_feriado(clima_row["fecha"], df_holiday)
             
             fila = {
+                "id_sucursal": str(id_sucursal),
                 "nombre": product_row["nombre"],
                 "temp_avg": clima_row["temp_avg"],
                 "temp_min": clima_row["temp_min"],

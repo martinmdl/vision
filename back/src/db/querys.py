@@ -1,7 +1,17 @@
 unifyDataFrameQuery = """
     WITH fechas AS (
-        SELECT DISTINCT creacion
-        FROM detalle_ventas
+        SELECT DISTINCT v.id_sucursal, v.creacion
+        FROM ventas v
+    ),
+    ventas_agrupadas AS (
+        SELECT
+            v.id_sucursal,
+            v.creacion,
+            dv.id_producto,
+            SUM(dv.cantidad) AS cantidad_vendida
+        FROM ventas v
+        INNER JOIN detalle_ventas dv ON dv.id_venta = v.id_venta
+        GROUP BY v.id_sucursal, v.creacion, dv.id_producto
     ),
     feriados AS (
         SELECT DISTINCT 
@@ -12,9 +22,10 @@ unifyDataFrameQuery = """
         INNER JOIN tipo_feriado tf ON tf.id_tipo_feriado = f.tipo
     )
     SELECT
+        f.id_sucursal,
         p.nombre,
         f.creacion,
-        COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida,
+        COALESCE(va.cantidad_vendida, 0) AS cantidad_vendida,
         c.temp_avg,
         c.temp_min,
         c.temp_max,
@@ -25,22 +36,30 @@ unifyDataFrameQuery = """
         c.nubosidad,
         COALESCE(fer.tipo, '-') AS tipo_feriado,
         COALESCE(fer.nombre, '-') AS feriado
-    FROM productos p
-    CROSS JOIN fechas f
-    LEFT JOIN detalle_ventas dv 
-    ON dv.id_producto = p.id_producto 
-    AND dv.creacion = f.creacion
+    FROM fechas f
+    INNER JOIN productos p ON p.id_sucursal = f.id_sucursal
+    LEFT JOIN ventas_agrupadas va 
+    ON va.id_sucursal = f.id_sucursal 
+    AND va.creacion = f.creacion
+    AND va.id_producto = p.id_producto
     LEFT JOIN clima c
     ON c.fecha = f.creacion
     LEFT JOIN feriados fer ON fer.fecha = f.creacion
-    GROUP BY p.nombre, f.creacion, c.temp_avg, c.temp_min, c.temp_max, 
+    GROUP BY f.id_sucursal, p.nombre, f.creacion, va.cantidad_vendida, c.temp_avg, c.temp_min, c.temp_max, 
     c.humedad, c.lluvia, c.viento, c.presion, c.nubosidad, fer.tipo, fer.nombre
-    ORDER BY f.creacion, p.nombre;
+    ORDER BY f.id_sucursal, f.creacion, p.nombre;
 """
 
 getDBLastYearQuery = "SELECT MAX(EXTRACT(YEAR FROM creacion)) FROM ventas"
 
-getDBProducts = "SELECT id_producto, nombre FROM productos"
+getDBProducts = "SELECT id_producto, nombre, id_sucursal FROM productos"
+
+getDBProductsBySucursalQuery = """
+    SELECT id_producto, nombre, id_sucursal
+    FROM productos
+    WHERE id_sucursal = :id_sucursal
+    ORDER BY id_producto;
+"""
 
 getDBFeriados = """
     SELECT DISTINCT ON (fer.fecha)

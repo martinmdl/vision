@@ -7,6 +7,7 @@ from src.db.querys import (
     unifyDataFrameQuery,
     getDBLastYearQuery,
     getDBProducts,
+    getDBProductsBySucursalQuery,
     getDBFeriados,
     getTopSoldProductsQuery,
     listSucursalesAllQuery,
@@ -163,9 +164,9 @@ def getDataForML():
         result = conn.execute(text(unifyDataFrameQuery))
         return pd.DataFrame(result.fetchall(), columns=result.keys())
     
-def getProducts():
+def getProducts(id_sucursal):
     with engine.connect() as conn:
-        result = conn.execute(text(getDBProducts))
+        result = conn.execute(text(getDBProductsBySucursalQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 def getHolidays():

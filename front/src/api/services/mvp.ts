@@ -56,13 +56,14 @@ export async function uploadFile(file: File, idSucursal?: string | null) {
   }
 }
 
-export async function predict(): Promise<PredictResponse> {
+export async function predict(idSucursal: string | number): Promise<PredictResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/predict`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ id_sucursal: Number(idSucursal) }),
     });
 
     const payload = await response.json();
