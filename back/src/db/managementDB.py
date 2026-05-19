@@ -9,6 +9,8 @@ from src.db.querys import (
     getDBProducts,
     getDBFeriados,
     getTopSoldProductsQuery,
+    getTopProfitableProductsQuery,
+    getWeatherImpactIncomeQuery,
 )
 
 metadata = MetaData()
@@ -160,4 +162,16 @@ def getHolidays():
 def getTopSoldProducts(limit=10):
     with engine.connect() as conn:
         result = conn.execute(text(getTopSoldProductsQuery), {"limit": limit})
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getTopProfitableProducts(limit=10):
+    with engine.connect() as conn:
+        result = conn.execute(text(getTopProfitableProductsQuery), {"limit": limit})
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getWeatherImpactIncome():
+    with engine.connect() as conn:
+        result = conn.execute(text(getWeatherImpactIncomeQuery))
         return pd.DataFrame(result.fetchall(), columns=result.keys())

@@ -68,3 +68,38 @@ getTopSoldProductsQuery = """
     ORDER BY total_vendido DESC
     LIMIT :limit;
 """
+
+getTopProfitableProductsQuery = """
+    SELECT
+        p.nombre AS nombre,
+        COALESCE(SUM(dv.cantidad * (COALESCE(dv.precio, 0) - COALESCE(dv.costo, 0))), 0) AS total_ganancia
+    FROM detalle_ventas dv
+    INNER JOIN productos AS p
+        ON p.id_producto = dv.id_producto
+    WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
+        AND (dv.activo IS NULL OR dv.activo = TRUE)
+    GROUP BY p.nombre
+    ORDER BY total_ganancia DESC
+    LIMIT :limit;
+"""
+
+getWeatherImpactIncomeQuery = """
+    SELECT
+        TO_CHAR(v.creacion, 'YYYY-MM') AS mes,
+        COALESCE(
+            SUM(CASE WHEN COALESCE(c.lluvia, 0) > 0 THEN COALESCE(v.total, 0) ELSE 0 END)
+            / NULLIF(COUNT(DISTINCT CASE WHEN COALESCE(c.lluvia, 0) > 0 THEN v.creacion END), 0),
+            0
+        ) AS ingreso_lluvioso,
+        COALESCE(
+            SUM(CASE WHEN COALESCE(c.lluvia, 0) = 0 AND COALESCE(c.nubosidad, 0) <= 30 THEN COALESCE(v.total, 0) ELSE 0 END)
+            / NULLIF(COUNT(DISTINCT CASE WHEN COALESCE(c.lluvia, 0) = 0 AND COALESCE(c.nubosidad, 0) <= 30 THEN v.creacion END), 0),
+            0
+        ) AS ingreso_despejado
+    FROM ventas v
+    INNER JOIN clima c
+        ON c.fecha = v.creacion
+    WHERE (v.activo IS NULL OR v.activo = TRUE)
+    GROUP BY TO_CHAR(v.creacion, 'YYYY-MM'), EXTRACT(YEAR FROM v.creacion), EXTRACT(MONTH FROM v.creacion)
+    ORDER BY EXTRACT(YEAR FROM v.creacion), EXTRACT(MONTH FROM v.creacion);
+"""
