@@ -23,24 +23,94 @@ interface MetricsDashboardProps {
   onReorderMetrics: (fromId: string, toId: string) => void;
 }
 
-function SortableMetric({ metric, onRemove, onDuplicate }: {
+function SortableMetric({
+  metric,
+  onRemove,
+  onDuplicate,
+}: {
   metric: Metric;
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: metric.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: metric.id });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto' as const,
+    zIndex: isDragging ? 50 : ('auto' as const),
   };
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <MetricCard metric={metric} onRemove={onRemove} onDuplicate={onDuplicate} />
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="cursor-grab active:cursor-grabbing"
+    >
+      <MetricCard
+        metric={metric}
+        onRemove={onRemove}
+        onDuplicate={onDuplicate}
+      />
     </div>
   );
 }
+
+function TopProductsChart({
+  data,
+}: {
+  data: TopSoldProductItem[];
+}) {
+  return (
+    <ResponsiveContainer width="100%" height={280}>
+      <BarChart data={data} layout="vertical" margin={{ left: 80 }}>
+        <XAxis
+          type="number"
+          tick={{
+            fontSize: 10,
+            fill: 'hsl(var(--muted-foreground))',
+          }}
+        />
+        <YAxis
+          dataKey="name"
+          type="category"
+          width={75}
+          tick={{
+            fontSize: 10,
+            fill: 'hsl(var(--muted-foreground))',
+          }}
+        />
+        <Tooltip
+          contentStyle={{
+            background: 'hsl(var(--card))',
+            border: '1px solid hsl(var(--border))',
+            borderRadius: 8,
+            fontSize: 12,
+          }}
+        />
+        <Bar dataKey="demand" radius={[0, 4, 4, 0]}>
+          {data.map((_, i) => (
+            <Cell
+              key={i}
+              fill={`hsl(var(--chart-${(i % 5) + 1}))`}
+              fillOpacity={0.8}
+            />
+          ))}
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 
 export default function MetricsDashboard({
   metrics, onRemoveMetric, onDuplicateMetric, onAddMetric, onReorderMetrics,
@@ -89,38 +159,15 @@ export default function MetricsDashboard({
 
   return (
     <>
-      <div className="bg-card rounded-xl border border-border shadow-card p-5 mb-4">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h3 className="text-sm font-semibold text-card-foreground">Top 10 Productos mas vendidos</h3>
-          {topProductsError && <span className="text-xs text-destructive">{topProductsError}</span>}
-        </div>
+    <MetricCard
+      title="Top 10 Productos más vendidos"
+      isLoading={isLoadingTopProducts}
+      error={topProductsError}
+      hasData={topProducts.length > 0}
+    >
+      <TopProductsChart data={topProducts} />
+    </MetricCard>
 
-        {isLoadingTopProducts ? (
-          <p className="text-xs text-muted-foreground">Cargando metrica...</p>
-        ) : hasTopProducts ? (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={topProducts} layout="vertical" margin={{ left: 80 }}>
-              <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={75} />
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-              />
-              <Bar dataKey="demand" radius={[0, 4, 4, 0]}>
-                {topProducts.map((_, i) => (
-                  <Cell key={i} fill={`hsl(var(--chart-${(i % 5) + 1}))`} fillOpacity={0.8} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-xs text-muted-foreground">No hay ventas suficientes para mostrar.</p>
-        )}
-      </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={metrics.map(m => m.id)} strategy={rectSortingStrategy}>
