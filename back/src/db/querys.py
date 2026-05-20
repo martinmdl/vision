@@ -87,8 +87,11 @@ getTopSoldProductsQuery = """
     FROM detalle_ventas dv
     INNER JOIN productos as p
     ON p.id_producto = dv.id_producto
+    INNER JOIN ventas v
+        ON v.id_venta = dv.id_venta
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
     AND (dv.activo IS NULL OR dv.activo = TRUE)
+    AND v.id_sucursal = :id_sucursal
     GROUP BY p.nombre
     ORDER BY total_vendido DESC
     LIMIT :limit;
@@ -147,8 +150,11 @@ getTopProfitableProductsQuery = """
     FROM detalle_ventas dv
     INNER JOIN productos AS p
         ON p.id_producto = dv.id_producto
+    INNER JOIN ventas v
+        ON v.id_venta = dv.id_venta
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
         AND (dv.activo IS NULL OR dv.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal
     GROUP BY p.nombre
     ORDER BY total_ganancia DESC
     LIMIT :limit;
@@ -171,6 +177,7 @@ getWeatherImpactIncomeQuery = """
     INNER JOIN clima c
         ON c.fecha = v.creacion
     WHERE (v.activo IS NULL OR v.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal
     GROUP BY TO_CHAR(v.creacion, 'YYYY-MM'), EXTRACT(YEAR FROM v.creacion), EXTRACT(MONTH FROM v.creacion)
     ORDER BY EXTRACT(YEAR FROM v.creacion), EXTRACT(MONTH FROM v.creacion);
 """
@@ -182,6 +189,7 @@ getCalendarImpactIncomeQuery = """
             COALESCE(SUM(v.total), 0) AS ingreso_dia
         FROM ventas v
         WHERE (v.activo IS NULL OR v.activo = TRUE)
+            AND v.id_sucursal = :id_sucursal
         GROUP BY v.creacion::date
     ),
     clasificacion_dias AS (
@@ -227,6 +235,7 @@ getCalendarUpliftQuery = """
             COALESCE(SUM(v.total), 0) AS ingreso_dia
         FROM ventas v
         WHERE (v.activo IS NULL OR v.activo = TRUE)
+            AND v.id_sucursal = :id_sucursal
         GROUP BY v.creacion::date
     ),
     clasificacion_dias AS (
@@ -263,8 +272,11 @@ getCategoryProfitabilityQuery = """
     FROM detalle_ventas dv
     INNER JOIN productos p
         ON p.id_producto = dv.id_producto
+    INNER JOIN ventas v
+        ON v.id_venta = dv.id_venta
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
         AND (dv.activo IS NULL OR dv.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal
     GROUP BY COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria')
     ORDER BY total_ganancia DESC;
 """

@@ -182,9 +182,9 @@ def getHolidays():
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getTopSoldProducts(limit=10):
+def getTopSoldProducts(id_sucursal, limit=10):
     with engine.connect() as conn:
-        result = conn.execute(text(getTopSoldProductsQuery), {"limit": limit})
+        result = conn.execute(text(getTopSoldProductsQuery), {"id_sucursal": id_sucursal, "limit": limit})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
@@ -226,31 +226,31 @@ def updateSucursalLastTrainingDate(id_sucursal, ultima_fecha_entrenamiento):
                 "ultima_fecha_entrenamiento": ultima_fecha_entrenamiento,
             },
         )
-def getTopProfitableProducts(limit=10):
+def getTopProfitableProducts(id_sucursal, limit=10):
     with engine.connect() as conn:
-        result = conn.execute(text(getTopProfitableProductsQuery), {"limit": limit})
+        result = conn.execute(text(getTopProfitableProductsQuery), {"id_sucursal": id_sucursal, "limit": limit})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getWeatherImpactIncome():
+def getWeatherImpactIncome(id_sucursal):
     with engine.connect() as conn:
-        result = conn.execute(text(getWeatherImpactIncomeQuery))
+        result = conn.execute(text(getWeatherImpactIncomeQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getCalendarImpactIncome():
+def getCalendarImpactIncome(id_sucursal):
     with engine.connect() as conn:
-        result = conn.execute(text(getCalendarImpactIncomeQuery))
+        result = conn.execute(text(getCalendarImpactIncomeQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getCalendarUplift():
+def getCalendarUplift(id_sucursal):
     with engine.connect() as conn:
-        result = conn.execute(text(getCalendarUpliftQuery))
+        result = conn.execute(text(getCalendarUpliftQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getCategoryProfitability():
+def getCategoryProfitability(id_sucursal):
     with engine.connect() as conn:
-        result = conn.execute(text(getCategoryProfitabilityQuery))
+        result = conn.execute(text(getCategoryProfitabilityQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())

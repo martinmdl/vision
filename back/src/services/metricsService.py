@@ -8,8 +8,8 @@ from ..db.managementDB import (
 )
 
 
-async def get_top_sold_products(limit=10):
-    df_top = getTopSoldProducts(limit)
+async def get_top_sold_products(id_sucursal, limit=10):
+    df_top = getTopSoldProducts(id_sucursal, limit)
 
     top_products = []
     for _, row in df_top.iterrows():
@@ -21,8 +21,8 @@ async def get_top_sold_products(limit=10):
     return top_products
 
 
-async def get_top_profitable_products(limit=10):
-    df_top = getTopProfitableProducts(limit)
+async def get_top_profitable_products(id_sucursal, limit=10):
+    df_top = getTopProfitableProducts(id_sucursal, limit)
 
     top_products = []
     for _, row in df_top.iterrows():
@@ -34,8 +34,8 @@ async def get_top_profitable_products(limit=10):
     return top_products
 
 
-async def get_weather_impact_income():
-    df_weather = getWeatherImpactIncome()
+async def get_weather_impact_income(id_sucursal):
+    df_weather = getWeatherImpactIncome(id_sucursal)
 
     weather_impact = []
     for _, row in df_weather.iterrows():
@@ -48,8 +48,8 @@ async def get_weather_impact_income():
     return weather_impact
 
 
-async def get_calendar_impact_income():
-    df_calendar = getCalendarImpactIncome()
+async def get_calendar_impact_income(id_sucursal):
+    df_calendar = getCalendarImpactIncome(id_sucursal)
 
     calendar_impact = []
     for _, row in df_calendar.iterrows():
@@ -63,8 +63,8 @@ async def get_calendar_impact_income():
     return calendar_impact
 
 
-async def get_calendar_uplift():
-    df_uplift = getCalendarUplift()
+async def get_calendar_uplift(id_sucursal):
+    df_uplift = getCalendarUplift(id_sucursal)
     if df_uplift.empty:
         return {
             "holiday_uplift": 0.0,
@@ -78,8 +78,8 @@ async def get_calendar_uplift():
     }
 
 
-async def get_category_profitability():
-    df_category = getCategoryProfitability()
+async def get_category_profitability(id_sucursal):
+    df_category = getCategoryProfitability(id_sucursal)
 
     profitability = []
     for _, row in df_category.iterrows():
