@@ -16,6 +16,11 @@ from src.db.querys import (
     updateSucursalActivoQuery,
     getSucursalLastTrainingDateQuery,
     updateSucursalLastTrainingDateQuery,
+    getTopProfitableProductsQuery,
+    getWeatherImpactIncomeQuery,
+    getCalendarImpactIncomeQuery,
+    getCalendarUpliftQuery,
+    getCategoryProfitabilityQuery,
 )
 
 metadata = MetaData()
@@ -221,3 +226,31 @@ def updateSucursalLastTrainingDate(id_sucursal, ultima_fecha_entrenamiento):
                 "ultima_fecha_entrenamiento": ultima_fecha_entrenamiento,
             },
         )
+def getTopProfitableProducts(limit=10):
+    with engine.connect() as conn:
+        result = conn.execute(text(getTopProfitableProductsQuery), {"limit": limit})
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getWeatherImpactIncome():
+    with engine.connect() as conn:
+        result = conn.execute(text(getWeatherImpactIncomeQuery))
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getCalendarImpactIncome():
+    with engine.connect() as conn:
+        result = conn.execute(text(getCalendarImpactIncomeQuery))
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getCalendarUplift():
+    with engine.connect() as conn:
+        result = conn.execute(text(getCalendarUpliftQuery))
+        return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getCategoryProfitability():
+    with engine.connect() as conn:
+        result = conn.execute(text(getCategoryProfitabilityQuery))
+        return pd.DataFrame(result.fetchall(), columns=result.keys())

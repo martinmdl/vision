@@ -1,7 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Info, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
   type DragEndEvent,
@@ -13,7 +12,32 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Metric } from '@/types/store';
 import MetricCard from './MetricCard';
 import AddMetricModal from './AddMetricModal';
-import { getTopSoldProducts, type TopSoldProductItem } from '@/api/services/mvp.ts';
+import {
+  getTopSoldProducts,
+  getTopProfitableProducts,
+  getWeatherImpactIncome,
+  getCalendarImpactIncome,
+  getCalendarUplift,
+  getCategoryProfitability,
+  type TopSoldProductItem,
+  type TopProfitableProductItem,
+  type WeatherImpactIncomeItem,
+  type CalendarImpactIncomeItem,
+  type CalendarUpliftItem,
+  type CategoryProfitabilityItem,
+} from '@/api/services/mvp.ts';
+import {
+  TopProductsChart,
+  TopProfitableProductsChart,
+  WeatherImpactIncomeChart,
+  CalendarImpactIncomeChart,
+  CategoryProfitabilityChart,
+} from './MetricContent';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface MetricsDashboardProps {
   metrics: Metric[];
@@ -23,57 +47,255 @@ interface MetricsDashboardProps {
   onReorderMetrics: (fromId: string, toId: string) => void;
 }
 
-function SortableMetric({ metric, onRemove, onDuplicate }: {
+function UpliftKpiCard({
+  title,
+  titleInfo,
+  value,
+  isLoading,
+  error,
+}: {
+  title: string;
+  titleInfo: string;
+  value: number;
+  isLoading: boolean;
+  error: string;
+}) {
+  const formatted = `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+  const normalized = Math.max(0, Math.min(1, (value + 20) / 40));
+  const hue = 48 + (120 - 48) * normalized;
+  const backgroundColor = `hsl(${hue} 85% 84% / 0.95)`;
+  const borderColor = `hsl(${hue} 52% 58% / 0.75)`;
+
+  if (error) return null;
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border shadow-card p-5 bg-card">
+        <h3 className="text-sm font-semibold text-card-foreground mb-2 inline-flex items-center gap-1.5">
+          <span>{title}</span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Más información"
+              >
+                <Info className="w-3.5 h-3.5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-xs">
+              {titleInfo}
+            </TooltipContent>
+          </Tooltip>
+        </h3>
+        <p className="text-xs text-muted-foreground">Cargando métrica...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="rounded-xl border shadow-card hover:shadow-card-hover transition-shadow p-5"
+      style={{
+        backgroundColor,
+        borderColor,
+      }}
+    >
+      <h3 className="text-sm font-semibold text-card-foreground mb-3 inline-flex items-center gap-1.5">
+        <span>{title}</span>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              type="button"
+              className="text-muted-foreground hover:text-foreground transition-colors"
+              aria-label="Más información"
+            >
+              <Info className="w-3.5 h-3.5" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent className="max-w-xs text-xs">
+            {titleInfo}
+          </TooltipContent>
+        </Tooltip>
+      </h3>
+      <div className="flex items-end gap-2">
+        <span className="text-3xl font-bold text-card-foreground">{formatted}</span>
+        <span className="text-xs text-card-foreground/75">vs dia normal</span>
+      </div>
+    </div>
+  );
+}
+
+function SortableMetric({
+  metric,
+  onRemove,
+  onDuplicate,
+}: {
   metric: Metric;
   onRemove: (id: string) => void;
   onDuplicate: (id: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: metric.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: metric.id });
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    zIndex: isDragging ? 50 : 'auto' as const,
+    zIndex: isDragging ? 50 : ('auto' as const),
   };
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-      <MetricCard metric={metric} onRemove={onRemove} onDuplicate={onDuplicate} />
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="cursor-grab active:cursor-grabbing"
+    >
+      <MetricCard
+        metric={metric}
+        onRemove={onRemove}
+        onDuplicate={onDuplicate}
+      />
     </div>
   );
 }
+
 
 export default function MetricsDashboard({
   metrics, onRemoveMetric, onDuplicateMetric, onAddMetric, onReorderMetrics,
 }: MetricsDashboardProps) {
   const [showAdd, setShowAdd] = useState(false);
+
   const [topProducts, setTopProducts] = useState<TopSoldProductItem[]>([]);
   const [isLoadingTopProducts, setIsLoadingTopProducts] = useState(false);
   const [topProductsError, setTopProductsError] = useState('');
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-  const hasTopProducts = useMemo(() => topProducts.length > 0, [topProducts]);
+  const [topProfitableProducts, setTopProfitableProducts] = useState<TopProfitableProductItem[]>([]);
+  const [isLoadingTopProfitableProducts, setIsLoadingTopProfitableProducts] = useState(false);
+  const [topProfitableProductsError, setTopProfitableProductsError] = useState('');
+
+  const [weatherImpactIncome, setWeatherImpactIncome] = useState<WeatherImpactIncomeItem[]>([]);
+  const [isLoadingWeatherImpactIncome, setIsLoadingWeatherImpactIncome] = useState(false);
+  const [weatherImpactIncomeError, setWeatherImpactIncomeError] = useState('');
+
+  const [calendarImpactIncome, setCalendarImpactIncome] = useState<CalendarImpactIncomeItem[]>([]);
+  const [isLoadingCalendarImpactIncome, setIsLoadingCalendarImpactIncome] = useState(false);
+  const [calendarImpactIncomeError, setCalendarImpactIncomeError] = useState('');
+
+  const [categoryProfitability, setCategoryProfitability] = useState<CategoryProfitabilityItem[]>([]);
+  const [isLoadingCategoryProfitability, setIsLoadingCategoryProfitability] = useState(false);
+  const [categoryProfitabilityError, setCategoryProfitabilityError] = useState('');
+
+  const [calendarUplift, setCalendarUplift] = useState<CalendarUpliftItem>({
+    holiday_uplift: 0,
+    weekend_uplift: 0,
+  });
+  const [isLoadingCalendarUplift, setIsLoadingCalendarUplift] = useState(false);
+  const [calendarUpliftError, setCalendarUpliftError] = useState('');
+
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   useEffect(() => {
     let mounted = true;
 
-    const loadTopProducts = async () => {
-      setIsLoadingTopProducts(true);
-      setTopProductsError('');
+    const loadRankingMetric = async <T,>(
+      request: () => Promise<{ status_code: number; message: string; data?: T[] }>,
+      setData: (value: T[]) => void,
+      setError: (value: string) => void,
+      setIsLoading: (value: boolean) => void,
+    ) => {
+      setIsLoading(true);
+      setError('');
 
-      const response = await getTopSoldProducts(10);
+      const response = await request();
       if (!mounted) return;
 
       if (response.status_code === 200 && Array.isArray(response.data)) {
-        setTopProducts(response.data);
+        setData(response.data);
       } else {
-        setTopProducts([]);
-        setTopProductsError(response.message || 'No se pudo obtener la metrica.');
+        setData([]);
+        setError(response.message || 'No se pudo obtener la metrica.');
       }
 
-      setIsLoadingTopProducts(false);
+      setIsLoading(false);
+    };
+
+    const loadTopProducts = async () => {
+      await loadRankingMetric(
+        () => getTopSoldProducts(10),
+        setTopProducts,
+        setTopProductsError,
+        setIsLoadingTopProducts,
+      );
+    };
+
+    const loadTopProfitableProducts = async () => {
+      await loadRankingMetric(
+        () => getTopProfitableProducts(10),
+        setTopProfitableProducts,
+        setTopProfitableProductsError,
+        setIsLoadingTopProfitableProducts,
+      );
+    };
+
+    const loadWeatherImpactIncome = async () => {
+      await loadRankingMetric(
+        getWeatherImpactIncome,
+        setWeatherImpactIncome,
+        setWeatherImpactIncomeError,
+        setIsLoadingWeatherImpactIncome,
+      );
+    };
+
+    const loadCalendarImpactIncome = async () => {
+      await loadRankingMetric(
+        getCalendarImpactIncome,
+        setCalendarImpactIncome,
+        setCalendarImpactIncomeError,
+        setIsLoadingCalendarImpactIncome,
+      );
+    };
+
+    const loadCategoryProfitability = async () => {
+      await loadRankingMetric(
+        getCategoryProfitability,
+        setCategoryProfitability,
+        setCategoryProfitabilityError,
+        setIsLoadingCategoryProfitability,
+      );
+    };
+
+    const loadCalendarUplift = async () => {
+      setIsLoadingCalendarUplift(true);
+      setCalendarUpliftError('');
+
+      const response = await getCalendarUplift();
+      if (!mounted) return;
+
+      if (response.status_code === 200 && response.data) {
+        setCalendarUplift(response.data);
+      } else {
+        setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 });
+        setCalendarUpliftError(response.message || 'No se pudo obtener la metrica.');
+      }
+
+      setIsLoadingCalendarUplift(false);
     };
 
     loadTopProducts();
+    loadTopProfitableProducts();
+    loadWeatherImpactIncome();
+    loadCalendarImpactIncome();
+    loadCalendarUplift();
+    loadCategoryProfitability();
 
     return () => {
       mounted = false;
@@ -89,38 +311,74 @@ export default function MetricsDashboard({
 
   return (
     <>
-      <div className="bg-card rounded-xl border border-border shadow-card p-5 mb-4">
-        <div className="flex items-center justify-between gap-3 mb-4">
-          <h3 className="text-sm font-semibold text-card-foreground">Top 10 Productos mas vendidos</h3>
-          {topProductsError && <span className="text-xs text-destructive">{topProductsError}</span>}
-        </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+        <UpliftKpiCard
+          title="Incremento por feriado"
+          titleInfo="Tasa de aumento porcentual de ganancia en días festivos respecto a días normales."
+          value={calendarUplift.holiday_uplift}
+          isLoading={isLoadingCalendarUplift}
+          error={calendarUpliftError}
+        />
 
-        {isLoadingTopProducts ? (
-          <p className="text-xs text-muted-foreground">Cargando metrica...</p>
-        ) : hasTopProducts ? (
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={topProducts} layout="vertical" margin={{ left: 80 }}>
-              <XAxis type="number" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-              <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={75} />
-              <Tooltip
-                contentStyle={{
-                  background: 'hsl(var(--card))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: 8,
-                  fontSize: 12,
-                }}
-              />
-              <Bar dataKey="demand" radius={[0, 4, 4, 0]}>
-                {topProducts.map((_, i) => (
-                  <Cell key={i} fill={`hsl(var(--chart-${(i % 5) + 1}))`} fillOpacity={0.8} />
-                ))}
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        ) : (
-          <p className="text-xs text-muted-foreground">No hay ventas suficientes para mostrar.</p>
-        )}
+        <UpliftKpiCard
+          title="Incremento por fin de semana"
+          titleInfo="Tasa de aumento porcentual de ganancia en fines de semana respecto a días normales."
+          value={calendarUplift.weekend_uplift}
+          isLoading={isLoadingCalendarUplift}
+          error={calendarUpliftError}
+        />
+
+        <MetricCard
+          title="Top 10 Productos más vendidos"
+          titleInfo="Ranking de los 10 productos con mayor demanda acumulada en el período analizado."
+          isLoading={isLoadingTopProducts}
+          error={topProductsError}
+          hasData={topProducts.length > 0}
+        >
+          <TopProductsChart data={topProducts} />
+        </MetricCard>
+
+        <MetricCard
+          title="Top 10 Productos más rentables"
+          titleInfo="Ranking de los 10 productos con mayor ganancia total. Eje monetario expresado en miles de pesos."
+          isLoading={isLoadingTopProfitableProducts}
+          error={topProfitableProductsError}
+          hasData={topProfitableProducts.length > 0}
+        >
+          <TopProfitableProductsChart data={topProfitableProducts} />
+        </MetricCard>
+
+        <MetricCard
+          title="Impacto de Clima Adverso"
+          titleInfo="Comparación mensual de ingresos entre días lluviosos y días despejados. Valores en miles de pesos."
+          isLoading={isLoadingWeatherImpactIncome}
+          error={weatherImpactIncomeError}
+          hasData={weatherImpactIncome.length > 0}
+        >
+          <WeatherImpactIncomeChart data={weatherImpactIncome} />
+        </MetricCard>
+
+        <MetricCard
+          title="Comparativa por Tipo de Dia"
+          titleInfo="Comparación mensual de ingresos entre días festivos, normales y de fin de semana. Valores en miles de pesos."
+          isLoading={isLoadingCalendarImpactIncome}
+          error={calendarImpactIncomeError}
+          hasData={calendarImpactIncome.length > 0}
+        >
+          <CalendarImpactIncomeChart data={calendarImpactIncome} />
+        </MetricCard>
+
+        <MetricCard
+          title="Rentabilidad por Categoria"
+          titleInfo="Distribución de la ganancia total por categoría de producto."
+          isLoading={isLoadingCategoryProfitability}
+          error={categoryProfitabilityError}
+          hasData={categoryProfitability.length > 0}
+        >
+          <CategoryProfitabilityChart data={categoryProfitability} />
+        </MetricCard>
       </div>
+
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={metrics.map(m => m.id)} strategy={rectSortingStrategy}>
