@@ -1,8 +1,9 @@
 import { useRef, useState, type ChangeEvent } from 'react';
 import { Upload } from 'lucide-react';
-import { uploadFile } from '@/api/services/mvp';
+import { uploadFile } from '@/api/services/mvp.ts';
 import { toast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -20,10 +21,14 @@ interface UploadDataModalProps {
 export default function UploadDataModal({ open, onOpenChange }: UploadDataModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadStage, setUploadStage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetState = () => {
     setSelectedFile(null);
+    setUploadProgress(0);
+    setUploadStage('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -62,9 +67,15 @@ export default function UploadDataModal({ open, onOpenChange }: UploadDataModalP
     }
 
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadStage('Iniciando carga');
 
     try {
-      const response = await uploadFile(selectedFile);
+      const response = await uploadFile(
+        selectedFile,
+        (progress) => setUploadProgress(progress),
+        (stage) => setUploadStage(stage),
+      );
 
       if (response?.status_code === 200) {
         toast({
@@ -128,6 +139,16 @@ export default function UploadDataModal({ open, onOpenChange }: UploadDataModalP
               <p className="text-xs text-muted-foreground">
                 {selectedFile ? `Selected: ${selectedFile.name}` : 'No file selected yet.'}
               </p>
+
+              {isUploading && (
+                <div className="space-y-2 pt-2">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{uploadStage}</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-2" />
+                </div>
+              )}
             </div>
           </div>
         </div>
