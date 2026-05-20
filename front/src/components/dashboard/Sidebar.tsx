@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon } from 'lucide-react';
+import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Store } from '@/types/store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -9,22 +9,23 @@ import UploadDataModal from './UploadDataModal';
 
 interface SidebarProps {
   stores: Store[];
-  selectedStoreId: string;
+  selectedStoreId: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onSelectStore: (id: string) => void;
+  onSelectStore: (id: number) => void;
   onAddStore: (name: string) => void;
-  onDeleteStore: (id: string) => void;
+  onDeleteStore: (id: number) => void;
+  onEditStore?: (id: number, nombre: string) => void;
 }
 
 export default function Sidebar({
   stores, selectedStoreId, searchQuery, onSearchChange,
-  onSelectStore, onAddStore, onDeleteStore,
+  onSelectStore, onAddStore, onDeleteStore, onEditStore,
 }: SidebarProps) {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [newStoreName, setNewStoreName] = useState('');
 
   const handleAdd = () => {
@@ -92,6 +93,14 @@ export default function Sidebar({
                       <Upload className="w-4 h-4" />
                     </button>
                     <button
+                      className="p-1.5 rounded hover:bg-sidebar-fg/10"
+                      title="Editar nombre"
+                      onClick={e => { e.stopPropagation(); const newName = window.prompt('Nuevo nombre de la sucursal', store.name); if (newName && onEditStore) onEditStore(store.id, newName); }}
+                      type="button"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
                       className="p-1.5 rounded hover:bg-destructive/20 hover:text-destructive"
                       onClick={e => { e.stopPropagation(); setDeleteTarget(store.id); }}
                       title="Eliminar"
@@ -151,7 +160,7 @@ export default function Sidebar({
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={() => { if (deleteTarget) onDeleteStore(deleteTarget); setDeleteTarget(null); }}>Eliminar</Button>
+            <Button variant="destructive" onClick={() => { if (deleteTarget !== null) onDeleteStore(deleteTarget); setDeleteTarget(null); }}>Eliminar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -173,7 +182,7 @@ export default function Sidebar({
         </DialogContent>
       </Dialog>
 
-      <UploadDataModal open={showUploadModal} onOpenChange={setShowUploadModal} />
+      <UploadDataModal open={showUploadModal} onOpenChange={setShowUploadModal} storeId={selectedStoreId} />
     </>
   );
 }

@@ -41,6 +41,7 @@ import {
 
 interface MetricsDashboardProps {
   metrics: Metric[];
+  selectedStoreId: number;
   onRemoveMetric: (id: string) => void;
   onDuplicateMetric: (id: string) => void;
   onAddMetric: (title: string, category: string) => void;
@@ -170,7 +171,7 @@ function SortableMetric({
 
 
 export default function MetricsDashboard({
-  metrics, onRemoveMetric, onDuplicateMetric, onAddMetric, onReorderMetrics,
+  metrics, selectedStoreId, onRemoveMetric, onDuplicateMetric, onAddMetric, onReorderMetrics,
 }: MetricsDashboardProps) {
   const [showAdd, setShowAdd] = useState(false);
 
@@ -230,7 +231,7 @@ export default function MetricsDashboard({
 
     const loadTopProducts = async () => {
       await loadRankingMetric(
-        () => getTopSoldProducts(10),
+        () => getTopSoldProducts(selectedStoreId, 10),
         setTopProducts,
         setTopProductsError,
         setIsLoadingTopProducts,
@@ -239,7 +240,7 @@ export default function MetricsDashboard({
 
     const loadTopProfitableProducts = async () => {
       await loadRankingMetric(
-        () => getTopProfitableProducts(10),
+        () => getTopProfitableProducts(selectedStoreId, 10),
         setTopProfitableProducts,
         setTopProfitableProductsError,
         setIsLoadingTopProfitableProducts,
@@ -248,7 +249,7 @@ export default function MetricsDashboard({
 
     const loadWeatherImpactIncome = async () => {
       await loadRankingMetric(
-        getWeatherImpactIncome,
+        () => getWeatherImpactIncome(selectedStoreId),
         setWeatherImpactIncome,
         setWeatherImpactIncomeError,
         setIsLoadingWeatherImpactIncome,
@@ -257,7 +258,7 @@ export default function MetricsDashboard({
 
     const loadCalendarImpactIncome = async () => {
       await loadRankingMetric(
-        getCalendarImpactIncome,
+        () => getCalendarImpactIncome(selectedStoreId),
         setCalendarImpactIncome,
         setCalendarImpactIncomeError,
         setIsLoadingCalendarImpactIncome,
@@ -266,7 +267,7 @@ export default function MetricsDashboard({
 
     const loadCategoryProfitability = async () => {
       await loadRankingMetric(
-        getCategoryProfitability,
+        () => getCategoryProfitability(selectedStoreId),
         setCategoryProfitability,
         setCategoryProfitabilityError,
         setIsLoadingCategoryProfitability,
@@ -277,7 +278,7 @@ export default function MetricsDashboard({
       setIsLoadingCalendarUplift(true);
       setCalendarUpliftError('');
 
-      const response = await getCalendarUplift();
+      const response = await getCalendarUplift(selectedStoreId);
       if (!mounted) return;
 
       if (response.status_code === 200 && response.data) {
@@ -300,7 +301,7 @@ export default function MetricsDashboard({
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedStoreId]);
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;

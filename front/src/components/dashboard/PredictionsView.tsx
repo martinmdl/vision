@@ -110,7 +110,12 @@ function getHeatColor(val: number) {
   return 'bg-primary/5 text-foreground';
 }
 
-export default function PredictionsView() {
+interface PredictionsViewProps {
+  selectedStoreId: number;
+}
+
+export default function PredictionsView({ selectedStoreId }: PredictionsViewProps) {
+  const [view, setView] = useState<'aggregated' | 'detailed'>('aggregated');
   const [isLoading, setIsLoading] = useState(false);
   const [lastPredictionDate, setLastPredictionDate] = useState<Date | null>(null);
   const [backendHeatmap, setBackendHeatmap] = useState<HeatmapRow[]>(HEATMAP_DATA);
@@ -145,7 +150,7 @@ export default function PredictionsView() {
       });
     }, 300);
 
-    const response = await predict();
+    const response = await predict(selectedStoreId);
     window.clearInterval(progressTimer);
     setPredictProgress(100);
     setPredictStage('Completado');

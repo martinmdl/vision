@@ -18,6 +18,7 @@ export default function Index() {
         onSelectStore={state.setSelectedStoreId}
         onAddStore={state.addStore}
         onDeleteStore={state.deleteStore}
+        onEditStore={state.editStoreName}
       />
 
       <main className="flex-1 p-8 overflow-y-auto h-screen">
@@ -32,13 +33,14 @@ export default function Index() {
         {state.viewMode === 'metrics' ? (
           <MetricsDashboard
             metrics={state.metrics}
+            selectedStoreId={state.selectedStoreId}
             onRemoveMetric={state.removeMetric}
             onDuplicateMetric={state.duplicateMetric}
             onAddMetric={state.addMetric}
             onReorderMetrics={state.reorderMetrics}
           />
         ) : (
-          <PredictionsView />
+          <PredictionsView selectedStoreId={state.selectedStoreId} />
         )}
       </main>
     </div>

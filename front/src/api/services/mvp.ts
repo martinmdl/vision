@@ -97,11 +97,16 @@ export async function uploadFile(
   file: File,
   onProgress?: UploadProgressHandler,
   onStageChange?: UploadStageHandler,
+  idSucursal?: number | null
 ): Promise<UploadResponse> {
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
     formData.append('file', file);
+    
+    if (idSucursal !== null && idSucursal !== undefined) {
+      formData.append('id_sucursal', String(idSucursal));
+    }
 
     onStageChange?.('Preparando archivo');
     onProgress?.(5);
@@ -156,13 +161,14 @@ export async function uploadFile(
   });
 }
 
-export async function predict(): Promise<PredictResponse> {
+export async function predict(idSucursal: number): Promise<PredictResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/predict`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ id_sucursal: idSucursal }),
     });
 
     const payload = await response.json();
@@ -184,9 +190,9 @@ export async function predict(): Promise<PredictResponse> {
   }
 }
 
-export async function getTopSoldProducts(limit = 10): Promise<TopSoldProductsResponse> {
+export async function getTopSoldProducts(idSucursal: number, limit = 10): Promise<TopSoldProductsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/top-sold?limit=${limit}`, {
+    const response = await fetch(`${API_BASE_URL}/metrics/top-sold?id_sucursal=${idSucursal}&limit=${limit}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -212,9 +218,9 @@ export async function getTopSoldProducts(limit = 10): Promise<TopSoldProductsRes
   }
 }
 
-export async function getTopProfitableProducts(limit = 10): Promise<TopProfitableProductsResponse> {
+export async function getTopProfitableProducts(idSucursal: number, limit = 10): Promise<TopProfitableProductsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/top-profitable?limit=${limit}`, {
+    const response = await fetch(`${API_BASE_URL}/metrics/top-profitable?id_sucursal=${idSucursal}&limit=${limit}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -240,9 +246,9 @@ export async function getTopProfitableProducts(limit = 10): Promise<TopProfitabl
   }
 }
 
-export async function getWeatherImpactIncome(): Promise<WeatherImpactIncomeResponse> {
+export async function getWeatherImpactIncome(idSucursal: number): Promise<WeatherImpactIncomeResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/weather-impact-income`, {
+    const response = await fetch(`${API_BASE_URL}/metrics/weather-impact-income?id_sucursal=${idSucursal}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -268,9 +274,9 @@ export async function getWeatherImpactIncome(): Promise<WeatherImpactIncomeRespo
   }
 }
 
-export async function getCalendarImpactIncome(): Promise<CalendarImpactIncomeResponse> {
+export async function getCalendarImpactIncome(idSucursal: number): Promise<CalendarImpactIncomeResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/calendar-impact-income`, {
+    const response = await fetch(`${API_BASE_URL}/metrics/calendar-impact-income?id_sucursal=${idSucursal}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -296,9 +302,9 @@ export async function getCalendarImpactIncome(): Promise<CalendarImpactIncomeRes
   }
 }
 
-export async function getCalendarUplift(): Promise<CalendarUpliftResponse> {
+export async function getCalendarUplift(idSucursal: number): Promise<CalendarUpliftResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/calendar-uplift`, {
+    const response = await fetch(`${API_BASE_URL}/metrics/calendar-uplift?id_sucursal=${idSucursal}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -324,9 +330,9 @@ export async function getCalendarUplift(): Promise<CalendarUpliftResponse> {
   }
 }
 
-export async function getCategoryProfitability(): Promise<CategoryProfitabilityResponse> {
+export async function getCategoryProfitability(idSucursal: number): Promise<CategoryProfitabilityResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/category-profitability`, {
+    const response = await fetch(`${API_BASE_URL}/metrics/category-profitability?id_sucursal=${idSucursal}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

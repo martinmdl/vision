@@ -1,4 +1,4 @@
-from ..db.managementDB import init_db, save_to_postgres
+from ..db.managementDB import save_to_postgres
 from ..utils.cleanBusinessData import clean_xls
 from ..utils.cleanWeatherData import cleanWeather
 from ..utils.holiday import getHoliday
@@ -8,12 +8,9 @@ import asyncio
 import time
 
 
-async def uploadFileService(file):
-    
-    init_db()
-    
+async def uploadFileService(file, id_sucursal: int):
     # excel (subido por el usuario)
-    df_venta, df_producto, df_detalle_venta = clean_xls(file.file)
+    df_venta, df_producto, df_detalle_venta = clean_xls(file.file, id_sucursal)
     
     t0 = time.time()
     # Guardar en BD (upsert para no duplicar)
@@ -44,6 +41,6 @@ async def uploadFileService(file):
 
     # machine learning PKL
     t3 = time.time()
-    generateML()
+    generateML(id_sucursal)
     print(f"[4] generateML: {time.time() - t3:.2f}s")
     print(f"[TOTAL]: {time.time() - t0:.2f}s")

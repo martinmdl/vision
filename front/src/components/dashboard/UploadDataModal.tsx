@@ -16,9 +16,10 @@ import {
 interface UploadDataModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  storeId?: number | null;
 }
 
-export default function UploadDataModal({ open, onOpenChange }: UploadDataModalProps) {
+export default function UploadDataModal({ open, onOpenChange, storeId }: UploadDataModalProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -75,6 +76,7 @@ export default function UploadDataModal({ open, onOpenChange }: UploadDataModalP
         selectedFile,
         (progress) => setUploadProgress(progress),
         (stage) => setUploadStage(stage),
+        storeId
       );
 
       if (response?.status_code === 200) {
