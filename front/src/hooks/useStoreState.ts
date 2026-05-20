@@ -47,7 +47,7 @@ const INITIAL_METRICS: Metric[] = [
   ]},
 ];
 
-const SELECTED_STORE_KEY = 'vision:selectedStoreId';
+const SELECTED_STORE_KEY = 'selectedStoreId';
 
 export function useStoreState() {
   const initialSelectedStoreId = typeof window === 'undefined'

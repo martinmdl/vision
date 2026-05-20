@@ -104,7 +104,11 @@ function getHeatColor(val: number) {
   return 'bg-primary/5 text-foreground';
 }
 
-export default function PredictionsView() {
+interface PredictionsViewProps {
+  selectedStoreId: string;
+}
+
+export default function PredictionsView({ selectedStoreId }: PredictionsViewProps) {
   const [view, setView] = useState<'aggregated' | 'detailed'>('aggregated');
   const [isLoading, setIsLoading] = useState(false);
   const [lastPredictionDate, setLastPredictionDate] = useState<Date | null>(null);
@@ -122,7 +126,7 @@ export default function PredictionsView() {
     setIsLoading(true);
     setPredictMessage('');
 
-    const response = await predict();
+    const response = await predict(selectedStoreId);
 
     if (response.status_code === 200 && Array.isArray(response.data)) {
       setBackendHeatmap(buildHeatmapFromPredictions(response.data));

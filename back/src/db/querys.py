@@ -16,7 +16,6 @@ unifyDataFrameQuery = """
             ON tf.id_tipo_feriado = f.tipo
     )
     SELECT
-        p.id_sucursal,
         p.nombre,
         f.creacion,
         COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida,
@@ -44,7 +43,6 @@ unifyDataFrameQuery = """
         ON fer.fecha = f.creacion
     WHERE p.id_sucursal = :id_sucursal
     GROUP BY 
-        p.id_sucursal,
         p.nombre,
         f.creacion,
         c.temp_avg,
