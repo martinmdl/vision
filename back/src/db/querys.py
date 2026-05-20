@@ -138,6 +138,8 @@ updateSucursalLastTrainingDateQuery = """
     SET ultima_fecha_entrenamiento = :ultima_fecha_entrenamiento,
         actualizacion = NOW()
     WHERE id_sucursal = :id_sucursal;
+"""
+
 getTopProfitableProductsQuery = """
     SELECT
         p.nombre AS nombre,
