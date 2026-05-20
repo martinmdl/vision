@@ -9,13 +9,13 @@ import UploadDataModal from './UploadDataModal';
 
 interface SidebarProps {
   stores: Store[];
-  selectedStoreId: string;
+  selectedStoreId: number;
   searchQuery: string;
   onSearchChange: (q: string) => void;
-  onSelectStore: (id: string) => void;
+  onSelectStore: (id: number) => void;
   onAddStore: (name: string) => void;
-  onDeleteStore: (id: string) => void;
-  onEditStore?: (id: string, nombre: string) => void;
+  onDeleteStore: (id: number) => void;
+  onEditStore?: (id: number, nombre: string) => void;
 }
 
 export default function Sidebar({
@@ -25,7 +25,7 @@ export default function Sidebar({
   const [showAddModal, setShowAddModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
   const [newStoreName, setNewStoreName] = useState('');
 
   const handleAdd = () => {
@@ -160,7 +160,7 @@ export default function Sidebar({
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={() => { if (deleteTarget) onDeleteStore(deleteTarget); setDeleteTarget(null); }}>Eliminar</Button>
+            <Button variant="destructive" onClick={() => { if (deleteTarget !== null) onDeleteStore(deleteTarget); setDeleteTarget(null); }}>Eliminar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

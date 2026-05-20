@@ -23,13 +23,13 @@ export interface TopSoldProductsResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
-export async function uploadFile(file: File, idSucursal?: string | null) {
+export async function uploadFile(file: File, idSucursal?: number | null) {
   try {
     const formData = new FormData();
     formData.append('file', file);
 
-    if (idSucursal) {
-      formData.append('id_sucursal', idSucursal);
+    if (idSucursal !== null && idSucursal !== undefined) {
+      formData.append('id_sucursal', String(idSucursal));
     }
 
     const response = await fetch(`${API_BASE_URL}/load`, {
@@ -56,14 +56,14 @@ export async function uploadFile(file: File, idSucursal?: string | null) {
   }
 }
 
-export async function predict(idSucursal: string | number): Promise<PredictResponse> {
+export async function predict(idSucursal: number): Promise<PredictResponse> {
   try {
     const response = await fetch(`${API_BASE_URL}/predict`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ id_sucursal: Number(idSucursal) }),
+      body: JSON.stringify({ id_sucursal: idSucursal }),
     });
 
     const payload = await response.json();

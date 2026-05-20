@@ -15,7 +15,7 @@ import {
 interface UploadDataModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  storeId?: string | null;
+  storeId?: number | null;
 }
 
 export default function UploadDataModal({ open, onOpenChange, storeId }: UploadDataModalProps) {

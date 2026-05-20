@@ -51,11 +51,11 @@ const SELECTED_STORE_KEY = 'selectedStoreId';
 
 export function useStoreState() {
   const initialSelectedStoreId = typeof window === 'undefined'
-    ? '1'
-    : window.localStorage.getItem(SELECTED_STORE_KEY) || '1';
+    ? 1
+    : Number(window.localStorage.getItem(SELECTED_STORE_KEY) || '1');
 
   const [stores, setStores] = useState<Store[]>(INITIAL_STORES);
-  const [selectedStoreId, setSelectedStoreId] = useState<string>(initialSelectedStoreId);
+  const [selectedStoreId, setSelectedStoreId] = useState<number>(initialSelectedStoreId);
   const [viewMode, setViewMode] = useState<ViewMode>('metrics');
   const [gridColumns, setGridColumns] = useState<GridColumns>(2);
   const [dateRange, setDateRange] = useState<DateRange>('30d');
@@ -65,7 +65,7 @@ export function useStoreState() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    window.localStorage.setItem(SELECTED_STORE_KEY, selectedStoreId);
+    window.localStorage.setItem(SELECTED_STORE_KEY, String(selectedStoreId));
   }, [selectedStoreId]);
 
   // Cargar tiendas desde backend al iniciar
@@ -76,7 +76,7 @@ export function useStoreState() {
       if (!mounted) return
       if (data) {
         // mapear campos del backend a Store
-        const mapped = data.map(d => ({ id: String(d.id_sucursal), name: d.nombre, files: [] }))
+        const mapped = data.map(d => ({ id: d.id_sucursal, name: d.nombre, files: [] }))
         setStores(mapped)
         if (mapped.length > 0) {
           const persistedStore = mapped.find(store => store.id === initialSelectedStoreId);
@@ -94,21 +94,21 @@ export function useStoreState() {
       return;
     }
 
-    const newStore: Store = { id: String(res.id_sucursal), name, files: [] };
+    const newStore: Store = { id: res.id_sucursal, name, files: [] };
     setStores(prev => [...prev, newStore]);
     setSelectedStoreId(newStore.id);
   }, []);
 
-  const deleteStore = useCallback(async (id: string) => {
-    const ok = await setStoreActivo(Number(id), false);
+  const deleteStore = useCallback(async (id: number) => {
+    const ok = await setStoreActivo(id, false);
     if (ok) {
       setStores(prev => prev.filter(s => s.id !== id));
-      setSelectedStoreId(prev => prev === id ? (stores[0]?.id || '') : prev);
+      setSelectedStoreId(prev => prev === id ? (stores[0]?.id || 1) : prev);
     }
   }, [stores]);
 
-  const editStoreName = useCallback(async (id: string, nombre: string) => {
-    const ok = await updateStoreName(Number(id), nombre);
+  const editStoreName = useCallback(async (id: number, nombre: string) => {
+    const ok = await updateStoreName(id, nombre);
     if (ok) {
       setStores(prev => prev.map(s => s.id === id ? { ...s, name: nombre } : s));
     }

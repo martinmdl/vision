@@ -105,7 +105,7 @@ function getHeatColor(val: number) {
 }
 
 interface PredictionsViewProps {
-  selectedStoreId: string;
+  selectedStoreId: number;
 }
 
 export default function PredictionsView({ selectedStoreId }: PredictionsViewProps) {
