@@ -143,7 +143,7 @@ export default function MetricCard({
       className="bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover transition-shadow p-5"
     >
       <div className="flex items-start justify-between mb-3">
-        <div>
+        <div className="cursor-grab active:cursor-grabbing">
           <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
             {resolvedCategory}
           </span>

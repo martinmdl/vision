@@ -153,7 +153,6 @@ function SortableMetric({
       style={style}
       {...attributes}
       {...listeners}
-      className="cursor-grab active:cursor-grabbing"
     >
       <MetricCard
         metric={metric}
