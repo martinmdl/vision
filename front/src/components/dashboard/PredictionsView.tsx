@@ -17,14 +17,6 @@ const DAILY_DATA = [
   { day: 'Dom', predicted: 1440 },
 ];
 
-const HEATMAP_DATA = [
-  { product: 'Leche Organica', mon: 48, tue: 45, wed: 52, thu: 49, fri: 58, sat: 62, sun: 50 },
-  { product: 'Pan de Masa Madre', mon: 42, tue: 39, wed: 44, thu: 41, fri: 50, sat: 55, sun: 43 },
-  { product: 'Huevos', mon: 38, tue: 36, wed: 42, thu: 39, fri: 46, sat: 52, sun: 40 },
-  { product: 'Paltas', mon: 35, tue: 32, wed: 38, thu: 36, fri: 42, sat: 48, sun: 37 },
-  { product: 'Yogur', mon: 33, tue: 30, wed: 36, thu: 34, fri: 40, sat: 44, sun: 35 },
-];
-
 const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'] as const;
 const DAYS_LABEL: Record<(typeof DAYS)[number], string> = {
   mon: 'Lun',
@@ -112,15 +104,14 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
   const [view, setView] = useState<'aggregated' | 'detailed'>('aggregated');
   const [isLoading, setIsLoading] = useState(false);
   const [lastPredictionDate, setLastPredictionDate] = useState<Date | null>(null);
-  const [backendHeatmap, setBackendHeatmap] = useState<HeatmapRow[]>(HEATMAP_DATA);
+  const [backendHeatmap, setBackendHeatmap] = useState<HeatmapRow[]>([]);
   const [predictMessage, setPredictMessage] = useState<string>('');
 
-  const heatmapData = useMemo(() => {
-    return backendHeatmap.length > 0 ? backendHeatmap : HEATMAP_DATA;
-  }, [backendHeatmap]);
+  const heatmapData = backendHeatmap;
 
   const totalPredicted = DAILY_DATA.reduce((sum, d) => sum + d.predicted, 0);
   const highestDay = DAILY_DATA.reduce((max, d) => d.predicted > max.predicted ? d : max, DAILY_DATA[0]);
+  const hasPredictions = backendHeatmap.length > 0;
 
   const handleGeneratePredictions = async () => {
     setIsLoading(true);
@@ -157,8 +148,19 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
       {predictMessage && (
         <p className="text-xs text-muted-foreground">{predictMessage}</p>
       )}
+      {!hasPredictions ? (
+        <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+          <h3 className="text-lg font-semibold mb-2">
+            No hay predicciones generadas
+          </h3>
 
-      {/* Toggle */}
+          <p className="text-sm text-muted-foreground">
+            Genera predicciones para visualizar análisis y demanda estimada.
+          </p>
+        </div>
+      ) : (
+        <>
+              {/* Toggle */}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setView('aggregated')}
@@ -296,6 +298,8 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
             </table>
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   );

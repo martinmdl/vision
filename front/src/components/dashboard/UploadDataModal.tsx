@@ -74,6 +74,11 @@ export default function UploadDataModal({ open, onOpenChange, storeId }: UploadD
         });
         onOpenChange(false);
         resetState();
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 1000);
+
         return;
       }
 

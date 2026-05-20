@@ -20,7 +20,7 @@ export default function TopBar({
   storeName,
 }: TopBarProps) {
   return (
-    <div className="flex items-center justify-between mb-6">
+    <div className="flex items-center justify-between mb-6 border-r-4 border-b-4 border-gray-500 sticky top-0 z-50 bg-white p-12 rounded">
       <div>
         <h2 className="text-lg font-bold text-foreground tracking-tight">{storeName}</h2>
         <p className="text-xs text-muted-foreground capitalize">Vista de {viewMode === 'metrics' ? 'metricas' : 'predicciones'}</p>
