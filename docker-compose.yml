@@ -71,7 +71,20 @@ services:
       - front_node_modules:/app/node_modules
     command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 8080"
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama_service
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+
 volumes:
   postgres_data:
   front_node_modules:
   pgadmin_data:
+  ollama_data:

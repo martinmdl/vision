@@ -4,17 +4,24 @@ from ..utils.cleanWeatherData import cleanWeather
 from ..utils.holiday import getHoliday
 from ..utils.weather import getWeather
 from ..utils.generateML import generateML
+from ..utils.scanExcel import scanExcel
 import asyncio
 import time
+import io
 
 
 async def uploadFileService(file):
     
     init_db()
-    
-    # excel (subido por el usuario)
-    df_venta, df_producto, df_detalle_venta = clean_xls(file.file)
-    
+
+    file_bytes = await file.read()
+
+    file_for_scan  = io.BytesIO(file_bytes)
+    file_for_clean = io.BytesIO(file_bytes)
+
+    mapeo = scanExcel(file_for_scan)
+    df_venta, df_producto, df_detalle_venta = clean_xls(file_for_clean, mapeo)
+
     t0 = time.time()
     # Guardar en BD (upsert para no duplicar)
     print(f"  ventas: {len(df_venta)} filas")

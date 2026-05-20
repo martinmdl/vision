@@ -1,5 +1,6 @@
 from fastapi import HTTPException, UploadFile, File, APIRouter
 from ..services.uploadFileService import uploadFileService
+import traceback
 
 router = APIRouter(prefix="", tags=["Upload"])
 
@@ -28,6 +29,7 @@ async def upload_file(file: UploadFile = File(...)):
         )
 
     except Exception as e:
+        traceback.print_exc()   # <-- imprime el traceback completo en los logs del contenedor
         raise HTTPException(
             status_code=500,
             detail=f"Error interno del servidor: {str(e)}"
