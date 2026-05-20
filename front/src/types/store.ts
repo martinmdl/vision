@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 export interface Store {
   id: number;
   name: string;
@@ -6,12 +8,19 @@ export interface Store {
 
 export interface Metric {
   id: string;
+
   title: string;
+  titleInfo: string;
   category: string;
+
   value: string;
   change: number;
-  chartType: 'line' | 'bar' | 'pie' | 'area' | 'donut' | 'hbar' | 'candle' | 'radar' | 'radial';
-  data: { name: string; value: number; open?: number; close?: number; high?: number; low?: number }[];
+
+  isLoading?: boolean;
+  error?: string;
+  hasData?: boolean;
+
+  renderContent?: () => ReactNode;
 }
 
 export type ViewMode = 'metrics' | 'predictions';

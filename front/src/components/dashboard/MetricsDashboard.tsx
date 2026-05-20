@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Info, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -40,12 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 
 interface MetricsDashboardProps {
-  metrics: Metric[];
   selectedStoreId: number;
-  onRemoveMetric: (id: string) => void;
-  onDuplicateMetric: (id: string) => void;
-  onAddMetric: (title: string, category: string) => void;
-  onReorderMetrics: (fromId: string, toId: string) => void;
 }
 
 function UpliftKpiCard({
@@ -171,8 +166,9 @@ function SortableMetric({
 
 
 export default function MetricsDashboard({
-  metrics, selectedStoreId, onRemoveMetric, onDuplicateMetric, onAddMetric, onReorderMetrics,
+  selectedStoreId
 }: MetricsDashboardProps) {
+  const [metricIds, setMetricIds] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
 
   const [topProducts, setTopProducts] = useState<TopSoldProductItem[]>([]);
@@ -304,18 +300,194 @@ export default function MetricsDashboard({
   }, [selectedStoreId]);
   
   const hasUploadedData =
-    topProducts.length > 0 ||
-    topProfitableProducts.length > 0 ||
-    weatherImpactIncome.length > 0 ||
-    calendarImpactIncome.length > 0 ||
-    categoryProfitability.length > 0;
+      topProducts.length > 0 ||
+      topProfitableProducts.length > 0 ||
+      weatherImpactIncome.length > 0 ||
+      calendarImpactIncome.length > 0 ||
+      categoryProfitability.length > 0;
+        const onRemoveMetric = (id: string) => {
+      setMetricIds(prev => prev.filter(metricId => metricId !== id));
+    };
 
-  const handleDragEnd = (e: DragEndEvent) => {
-    const { active, over } = e;
-    if (over && active.id !== over.id) {
-      onReorderMetrics(String(active.id), String(over.id));
-    }
-  };
+    const onDuplicateMetric = (id: string) => {
+      setMetricIds(prev => [
+        ...prev,
+        `${id}::${crypto.randomUUID()}`
+]);
+    };
+
+    const dashboardMetrics: Metric[] = useMemo(() => {
+      return [
+        {
+          id: 'top-sold-products',
+          title: 'Top 10 Productos más vendidos',
+          titleInfo: 'Ranking de los 10 productos con mayor demanda acumulada en el período analizado.',
+          category: 'product',
+
+          value: `${topProducts.length} productos`,
+          change: 0,
+
+          isLoading: isLoadingTopProducts,
+          error: topProductsError,
+
+          hasData: topProducts.length > 0,
+
+          renderContent: () => (
+            <TopProductsChart data={topProducts} />
+          ),
+        },
+
+        {
+          id: 'top-profitable-products',
+          title: 'Top 10 Productos más rentables',
+          titleInfo: 'Ranking de los 10 productos con mayor ganancia total. Eje monetario expresado en miles de pesos.',
+          category: 'finance',
+
+          value: `${topProfitableProducts.length} productos`,
+          change: 0,
+
+          isLoading: isLoadingTopProfitableProducts,
+          error: topProfitableProductsError,
+
+          hasData: topProfitableProducts.length > 0,
+
+          renderContent: () => (
+            <TopProfitableProductsChart
+              data={topProfitableProducts}
+            />
+          ),
+        },
+
+        {
+          id: 'weather-impact-income',
+          title: 'Impacto de Clima Adverso',
+          titleInfo: 'Comparación mensual de ingresos entre días lluviosos y días despejados. Valores en miles de pesos.',
+          category: 'weather',
+
+          value: `${weatherImpactIncome.length} meses`,
+          change: 0,
+
+          isLoading: isLoadingWeatherImpactIncome,
+          error: weatherImpactIncomeError,
+
+          hasData: weatherImpactIncome.length > 0,
+
+          renderContent: () => (
+            <WeatherImpactIncomeChart
+              data={weatherImpactIncome}
+            />
+          ),
+        },
+
+        {
+          id: 'calendar-impact-income',
+          title: 'Comparativa por Tipo de Día',
+          titleInfo: 'Comparación mensual de ingresos entre días festivos, normales y de fin de semana. Valores en miles de pesos.',
+          category: 'holidays',
+
+          value: `${calendarImpactIncome.length} meses`,
+          change: 0,
+
+          isLoading: isLoadingCalendarImpactIncome,
+          error: calendarImpactIncomeError,
+
+          hasData: calendarImpactIncome.length > 0,
+
+          renderContent: () => (
+            <CalendarImpactIncomeChart
+              data={calendarImpactIncome}
+            />
+          ),
+        },
+
+        {
+          id: 'category-profitability',
+          title: 'Rentabilidad por Categoría',
+          titleInfo: 'Distribución de la ganancia total por categoría de producto.',
+          category: 'finance',
+
+          value: `${categoryProfitability.length} categorías`,
+          change: 0,
+
+          isLoading: isLoadingCategoryProfitability,
+          error: categoryProfitabilityError,
+
+          hasData: categoryProfitability.length > 0,
+
+          renderContent: () => (
+            <CategoryProfitabilityChart
+              data={categoryProfitability}
+            />
+          ),
+        },
+      ];
+    }, [
+      topProducts,
+      topProfitableProducts,
+      weatherImpactIncome,
+      calendarImpactIncome,
+      categoryProfitability,
+
+      isLoadingTopProducts,
+      isLoadingTopProfitableProducts,
+      isLoadingWeatherImpactIncome,
+      isLoadingCalendarImpactIncome,
+      isLoadingCategoryProfitability,
+
+      topProductsError,
+      topProfitableProductsError,
+      weatherImpactIncomeError,
+      calendarImpactIncomeError,
+      categoryProfitabilityError,
+    ]);
+
+    useEffect(() => {
+      setMetricIds(prev => {
+        if (prev.length === 0) {
+          return dashboardMetrics.map(m => m.id);
+        }
+
+        const validIds = prev.filter(id =>
+          dashboardMetrics.some(m => m.id === id)
+        );
+
+        return validIds;
+      });
+    }, [dashboardMetrics]);
+
+    const handleDragEnd = (e: DragEndEvent) => {
+      const { active, over } = e;
+
+      if (!over || active.id === over.id) return;
+
+      setMetricIds(items => {
+        const oldIndex = items.indexOf(String(active.id));
+        const newIndex = items.indexOf(String(over.id));
+
+        const updated = [...items];
+        const [moved] = updated.splice(oldIndex, 1);
+
+        updated.splice(newIndex, 0, moved);
+
+        return updated;
+      });
+    };
+
+    
+  const orderedMetrics = metricIds
+    .map(instanceId => {
+      const baseId = instanceId.split('::')[0];
+
+      const metric = dashboardMetrics.find(m => m.id === baseId);
+
+      if (!metric) return null;
+
+      return {
+        ...metric,
+        id: instanceId,
+      };
+    })
+    .filter(Boolean) as Metric[];
 
   return (
     <>
@@ -332,77 +504,34 @@ export default function MetricsDashboard({
 
         <UpliftKpiCard
           title="Incremento por fin de semana"
-          titleInfo="Tasa de aumento porcentual de ganancia en fines de semana respecto a días normales."
+          titleInfo="Tasa de aumento porcentual de ganancia en días festivos respecto a días normales."
           value={calendarUplift.weekend_uplift}
           isLoading={isLoadingCalendarUplift}
           error={calendarUpliftError}
         />
-
-        <MetricCard
-          title="Top 10 Productos más vendidos"
-          titleInfo="Ranking de los 10 productos con mayor demanda acumulada en el período analizado."
-          isLoading={isLoadingTopProducts}
-          error={topProductsError}
-          hasData={topProducts.length > 0}
-        >
-          <TopProductsChart data={topProducts} />
-        </MetricCard>
-
-        <MetricCard
-          title="Top 10 Productos más rentables"
-          titleInfo="Ranking de los 10 productos con mayor ganancia total. Eje monetario expresado en miles de pesos."
-          isLoading={isLoadingTopProfitableProducts}
-          error={topProfitableProductsError}
-          hasData={topProfitableProducts.length > 0}
-        >
-          <TopProfitableProductsChart data={topProfitableProducts} />
-        </MetricCard>
-
-        <MetricCard
-          title="Impacto de Clima Adverso"
-          titleInfo="Comparación mensual de ingresos entre días lluviosos y días despejados. Valores en miles de pesos."
-          isLoading={isLoadingWeatherImpactIncome}
-          error={weatherImpactIncomeError}
-          hasData={weatherImpactIncome.length > 0}
-        >
-          <WeatherImpactIncomeChart data={weatherImpactIncome} />
-        </MetricCard>
-
-        <MetricCard
-          title="Comparativa por Tipo de Dia"
-          titleInfo="Comparación mensual de ingresos entre días festivos, normales y de fin de semana. Valores en miles de pesos."
-          isLoading={isLoadingCalendarImpactIncome}
-          error={calendarImpactIncomeError}
-          hasData={calendarImpactIncome.length > 0}
-        >
-          <CalendarImpactIncomeChart data={calendarImpactIncome} />
-        </MetricCard>
-
-        <MetricCard
-          title="Rentabilidad por Categoria"
-          titleInfo="Distribución de la ganancia total por categoría de producto."
-          isLoading={isLoadingCategoryProfitability}
-          error={categoryProfitabilityError}
-          hasData={categoryProfitability.length > 0}
-        >
-          <CategoryProfitabilityChart data={categoryProfitability} />
-        </MetricCard>
       </div>
-
-
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={metrics.map(m => m.id)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-            <AnimatePresence>
-              {metrics.map(m => (
-                <SortableMetric key={m.id} metric={m} onRemove={onRemoveMetric} onDuplicate={onDuplicateMetric} />
-              ))}
-            </AnimatePresence>
-          </div>
-        </SortableContext>
-      </DndContext>
+      
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext
+            items={orderedMetrics.map(m => m.id)}
+            strategy={rectSortingStrategy}
+          >
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <AnimatePresence>
+                {orderedMetrics.map(metric => (
+                  <SortableMetric
+                    key={metric.id}
+                    metric={metric}
+                    onRemove={onRemoveMetric}
+                    onDuplicate={onDuplicateMetric}
+                  />
+                ))}
+              </AnimatePresence>
             </div>
-      ) : (<div>
+          </SortableContext>
+        </DndContext>
+      </div>
+      ) : (  <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
             <h3 className="text-lg font-semibold text-card-foreground mb-2">
             No hay datos cargados
             </h3>
@@ -420,7 +549,7 @@ export default function MetricsDashboard({
         <Plus className="w-5 h-5" />
       </button>
 
-      <AddMetricModal open={showAdd} onClose={() => setShowAdd(false)} onAdd={onAddMetric} />
+      <AddMetricModal open={showAdd} onClose={() => setShowAdd(false)} onAdd={() => {}} />
     </>
   );
 }
