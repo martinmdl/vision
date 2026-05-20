@@ -118,17 +118,16 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
   const [view, setView] = useState<'aggregated' | 'detailed'>('aggregated');
   const [isLoading, setIsLoading] = useState(false);
   const [lastPredictionDate, setLastPredictionDate] = useState<Date | null>(null);
-  const [backendHeatmap, setBackendHeatmap] = useState<HeatmapRow[]>(HEATMAP_DATA);
+  const [backendHeatmap, setBackendHeatmap] = useState<HeatmapRow[]>([]);
   const [predictMessage, setPredictMessage] = useState<string>('');
   const [predictProgress, setPredictProgress] = useState(0);
   const [predictStage, setPredictStage] = useState('');
 
-  const heatmapData = useMemo(() => {
-    return backendHeatmap.length > 0 ? backendHeatmap : HEATMAP_DATA;
-  }, [backendHeatmap]);
+  const heatmapData = backendHeatmap;
 
   const totalPredicted = DAILY_DATA.reduce((sum, d) => sum + d.predicted, 0);
   const highestDay = DAILY_DATA.reduce((max, d) => d.predicted > max.predicted ? d : max, DAILY_DATA[0]);
+  const hasPredictions = backendHeatmap.length > 0;
 
   const handleGeneratePredictions = async () => {
     setIsLoading(true);
@@ -184,6 +183,17 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
       {predictMessage && (
         <p className="text-xs text-muted-foreground">{predictMessage}</p>
       )}
+      {!hasPredictions ? (
+        <div className="rounded-xl border border-dashed border-border bg-card p-10 text-center">
+          <h3 className="text-lg font-semibold mb-2">
+            No hay predicciones generadas
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Genera predicciones para visualizar análisis y demanda estimada.
+          </p>
+        </div>
+      ) : (
+        <>
 
       {isLoading && (
         <div className="space-y-2">
@@ -310,6 +320,8 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
           </AreaChart>
         </ResponsiveContainer>
       </div>
+      </>
+    )}
     </div>
   );
 }

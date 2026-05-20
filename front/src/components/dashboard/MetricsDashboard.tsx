@@ -302,6 +302,13 @@ export default function MetricsDashboard({
       mounted = false;
     };
   }, [selectedStoreId]);
+  
+  const hasUploadedData =
+    topProducts.length > 0 ||
+    topProfitableProducts.length > 0 ||
+    weatherImpactIncome.length > 0 ||
+    calendarImpactIncome.length > 0 ||
+    categoryProfitability.length > 0;
 
   const handleDragEnd = (e: DragEndEvent) => {
     const { active, over } = e;
@@ -312,6 +319,8 @@ export default function MetricsDashboard({
 
   return (
     <>
+    {hasUploadedData ? (
+      <div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
         <UpliftKpiCard
           title="Incremento por feriado"
@@ -392,6 +401,17 @@ export default function MetricsDashboard({
           </div>
         </SortableContext>
       </DndContext>
+            </div>
+      ) : (<div>
+            <h3 className="text-lg font-semibold text-card-foreground mb-2">
+            No hay datos cargados
+            </h3>
+
+            <p className="text-sm text-muted-foreground">
+            Sube un archivo para visualizar métricas personalizadas.
+            </p>
+      </div>)
+      }
 
       <button
         onClick={() => setShowAdd(true)}
