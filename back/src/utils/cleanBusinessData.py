@@ -1,7 +1,7 @@
 import pandas as pd
 import time
 
-def clean_xls(xls_file, mapeo):
+def clean_xls(xls_file, mapeo, id_sucursal=None):
     t0 = time.time()
 
     df_venta         = _extraer_df(xls_file, mapeo["VENTAS"])
@@ -23,6 +23,10 @@ def clean_xls(xls_file, mapeo):
     df_venta         = _limpiar_df(df_venta)
     df_producto      = _limpiar_df(df_producto)
     df_detalle_venta = _limpiar_df(df_detalle_venta)
+
+    if id_sucursal is not None:
+        df_venta["id_sucursal"] = id_sucursal
+        df_producto["id_sucursal"] = id_sucursal
 
     # id_detalle después de limpiar para evitar huecos
     df_detalle_venta.insert(0, "id_detalle", range(1, len(df_detalle_venta) + 1))

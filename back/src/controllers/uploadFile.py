@@ -1,11 +1,11 @@
-from fastapi import HTTPException, UploadFile, File, APIRouter
+from fastapi import HTTPException, UploadFile, File, APIRouter, Form
 from ..services.uploadFileService import uploadFileService
 import traceback
 
 router = APIRouter(prefix="", tags=["Upload"])
 
 @router.post("/load")
-async def upload_file(file: UploadFile = File(...)):
+async def upload_file(file: UploadFile = File(...), id_sucursal: int = Form(...)):
 
     # Validación de extensión
     if not (file.filename.endswith(".xls") or file.filename.endswith(".xlsx")):
@@ -15,7 +15,7 @@ async def upload_file(file: UploadFile = File(...)):
         )
 
     try:
-        await uploadFileService(file)
+        await uploadFileService(file, id_sucursal)
 
         return {
             "status_code": 200,

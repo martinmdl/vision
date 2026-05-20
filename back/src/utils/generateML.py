@@ -1,47 +1,46 @@
-from ..db.managementDB import getDataForML
+from ..db.managementDB import getDataForML, getSucursalLastTrainingDate, updateSucursalLastTrainingDate
 from catboost import CatBoostRegressor, Pool
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import pandas as pd
 import numpy as np
 import os
 
-LAST_TRAINED_PATH = "src/model/last_trained_date.txt"
+MODEL_DIR = "src/model"
 
-def getLastTrainedDate():
-    if not os.path.exists(LAST_TRAINED_PATH):
-        return None
-    with open(LAST_TRAINED_PATH) as f:
-        return f.read().strip()
 
-def saveLastTrainedDate(date):
-    os.makedirs("src/model", exist_ok=True)
-    with open(LAST_TRAINED_PATH, "w") as f:
-        f.write(str(date))
+def getModelPath(id_sucursal: int):
+    return os.path.join(MODEL_DIR, f"catboost_model_{id_sucursal}.cbm")
 
 # sobreescribir predictSales.pkl
-def generateML():
+def generateML(id_sucursal: int):
 
-    df = getDataForML()
+    df = getDataForML(id_sucursal)
+
+    if df.empty:
+        print(f"Sucursal {id_sucursal}: sin datos para entrenar.")
+        return
 
     # Crear features de fecha
     df["creacion"] = pd.to_datetime(df["creacion"])
 
-    last_trained_date = getLastTrainedDate()
-    model_exists = os.path.exists("src/model/catboost_model.cbm")
+    last_trained_date = getSucursalLastTrainingDate(id_sucursal)
+    model_path = getModelPath(id_sucursal)
+    model_exists = os.path.exists(model_path)
 
     # Si hay un modelo previo y una fecha de último entrenamiento, hacer entrenamiento incremental
     if last_trained_date and model_exists:
-        df_train = df[df["creacion"] > pd.to_datetime(last_trained_date)]
+        last_trained_date = pd.to_datetime(last_trained_date).date()
+        df_train = df[df["creacion"].dt.date > last_trained_date]
         if df_train.empty:
-            print("Sin datos nuevos, se omite el reentrenamiento.")
+            print(f"Sucursal {id_sucursal}: sin datos nuevos, se omite el reentrenamiento.")
             return
     
         # CAMBIO: iterations proporcional al % de datos nuevos
         pct_nuevos = len(df_train) / len(df)
         iterations = max(200, int(1000 * pct_nuevos))
-        print(f"Entrenamiento incremental con {len(df_train)} filas nuevas ({pct_nuevos:.0%}) → {iterations} iteraciones.")
+        print(f"Sucursal {id_sucursal}: entrenamiento incremental con {len(df_train)} filas nuevas ({pct_nuevos:.0%}) → {iterations} iteraciones.")
     else:
-        print("Primera carga, entrenamiento completo.")
+        print(f"Sucursal {id_sucursal}: primera carga, entrenamiento completo.")
         df_train = df
         iterations = 1000
 
@@ -78,14 +77,14 @@ def generateML():
     # Si existe modelo previo, continuar desde él con init_model
     if last_trained_date and model_exists:
         prev_model = CatBoostRegressor()
-        prev_model.load_model("src/model/catboost_model.cbm")
+        prev_model.load_model(model_path)
         model.fit(train_pool, init_model=prev_model)
     else:
         model.fit(train_pool)
 
-    os.makedirs("src/model", exist_ok=True)
-    model.save_model("src/model/catboost_model.cbm")
-    saveLastTrainedDate(df_train["creacion"].max())
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    model.save_model(model_path)
+    updateSucursalLastTrainingDate(id_sucursal, df_train["creacion"].max().date())
 
     # Predecir y evaluar
     test_pool = Pool(X_test, cat_features=cat_cols)
