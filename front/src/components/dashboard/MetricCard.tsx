@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import {
   MoreHorizontal,
@@ -8,31 +7,11 @@ import {
   Filter,
   Download,
   BarChart3,
-  Info,
+    Info,
 } from 'lucide-react';
-import {
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  PieChart,
-  Pie,
-  Cell,
-  RadarChart,
-  Radar,
-  PolarGrid,
-  PolarAngleAxis,
-  RadialBarChart,
-  RadialBar,
-  ComposedChart,
-  XAxis,
-  YAxis,
-  ResponsiveContainer,
-} from 'recharts';
 
 import type { Metric } from '@/types/store';
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,23 +19,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-const CHART_COLOR = 'hsl(243, 75%, 59%)';
-const CHART_COLOR_GREEN = 'hsl(152, 69%, 41%)';
-const CHART_COLOR_RED = 'hsl(0, 72%, 51%)';
-
-const PIE_COLORS = [
-  'hsl(243, 75%, 59%)',
-  'hsl(152, 69%, 41%)',
-  'hsl(38, 92%, 50%)',
-  'hsl(280, 65%, 60%)',
-  'hsl(199, 89%, 48%)',
-];
 
 const CATEGORY_LABELS: Record<string, string> = {
   finance: 'finanzas',
@@ -69,28 +38,18 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 interface MetricCardProps {
-  metric?: Metric;
-
-  title?: string;
-  category?: string;
-  error?: string;
-  isLoading?: boolean;
-  hasData?: boolean;
-  loadingText?: string;
-  emptyText?: string;
-  titleInfo?: string;
-  children?: ReactNode;
+  metric: Metric;
 
   onRemove?: (id: string) => void;
   onDuplicate?: (id: string) => void;
 }
 
 function MetricActions({
-  metric,
+  metricId,
   onRemove,
   onDuplicate,
 }: {
-  metric: Metric;
+  metricId: string;
   onRemove?: (id: string) => void;
   onDuplicate?: (id: string) => void;
 }) {
@@ -102,13 +61,20 @@ function MetricActions({
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent
+        align="end"
+        className="w-48"
+      >
         <DropdownMenuItem>
           <Settings className="w-3.5 h-3.5 mr-2" />
           Editar configuración
         </DropdownMenuItem>
 
-        <DropdownMenuItem onClick={() => onDuplicate?.(metric.id)}>
+        <DropdownMenuItem
+          onClick={() =>
+            onDuplicate?.(metricId)
+          }
+        >
           <Copy className="w-3.5 h-3.5 mr-2" />
           Duplicar
         </DropdownMenuItem>
@@ -132,7 +98,9 @@ function MetricActions({
 
         <DropdownMenuItem
           className="text-destructive"
-          onClick={() => onRemove?.(metric.id)}
+          onClick={() =>
+            onRemove?.(metricId)
+          }
         >
           <Trash2 className="w-3.5 h-3.5 mr-2" />
           Eliminar
@@ -142,188 +110,90 @@ function MetricActions({
   );
 }
 
-function MiniChart({
-  data,
-  type,
-}: {
-  data: Metric['data'];
-  type: Metric['chartType'];
-}) {
-  const color = type === 'bar' ? CHART_COLOR : CHART_COLOR_GREEN;
-
-  if (type === 'pie' || type === 'donut') {
-    return (
-      <ResponsiveContainer width="100%" height={80}>
-        <PieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="name"
-            innerRadius={type === 'donut' ? 18 : 0}
-            outerRadius={32}
-            paddingAngle={2}
-          >
-            {data.map((_, i) => (
-              <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
-            ))}
-          </Pie>
-        </PieChart>
-      </ResponsiveContainer>
-    );
+export default function MetricCard({
+  metric,
+  onRemove,
+  onDuplicate,
+}: MetricCardProps) {
+  if (metric.error) {
+    return null;
   }
 
-  if (type === 'hbar') {
-    return (
-      <ResponsiveContainer width="100%" height={80}>
-        <BarChart data={data} layout="vertical">
-          <XAxis type="number" hide />
-          <YAxis type="category" dataKey="name" hide />
-          <Bar dataKey="value" fill={CHART_COLOR} radius={[0, 3, 3, 0]} />
-        </BarChart>
-      </ResponsiveContainer>
-    );
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height={64}>
-      {type === 'bar' ? (
-        <BarChart data={data}>
-          <Bar dataKey="value" fill={CHART_COLOR} radius={[2, 2, 0, 0]} />
-        </BarChart>
-      ) : type === 'line' ? (
-        <LineChart data={data}>
-          <Line
-            type="monotone"
-            dataKey="value"
-            stroke={color}
-            strokeWidth={2}
-            dot={false}
-          />
-        </LineChart>
-      ) : (
-        <AreaChart data={data}>
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={color}
-            strokeWidth={2}
-            fill={color}
-            fillOpacity={0.15}
-          />
-        </AreaChart>
-      )}
-    </ResponsiveContainer>
-  );
-}
-
-export default function MetricCard(props: MetricCardProps) {
-  const {
-    metric,
-    title,
-    category,
-    error,
-    isLoading,
-    hasData,
-    loadingText = 'Cargando métrica...',
-    emptyText = 'No hay datos para mostrar.',
-    titleInfo,
-    children,
-    onRemove,
-    onDuplicate,
-  } = props;
-
-  if (error) return null;
-
-  const resolvedTitle = metric?.title ?? title ?? 'Métrica';
   const resolvedCategory =
-    metric
-      ? CATEGORY_LABELS[metric.category] ?? metric.category
-      : category;
+    CATEGORY_LABELS[metric.category] ??
+    metric.category;
 
-  const resolvedHasData =
-    metric ? metric.data.length > 0 : hasData;
-
-  const isPositive = metric ? metric.change >= 0 : false;
+  const isPositive = metric.change >= 0;
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.95 }}
+      initial={{
+        opacity: 0,
+        scale: 0.95,
+      }}
+      animate={{
+        opacity: 1,
+        scale: 1,
+      }}
+      exit={{
+        opacity: 0,
+        scale: 0.95,
+      }}
       className="bg-card rounded-xl border border-border shadow-card hover:shadow-card-hover transition-shadow p-5"
     >
       <div className="flex items-start justify-between mb-3">
-        <div>
-          {resolvedCategory && (
-            <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
-              {resolvedCategory}
-            </span>
-          )}
+        <div className="cursor-grab active:cursor-grabbing">
+          <span className="text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+            {resolvedCategory}
+          </span>
+
+          <span className="flex items-center gap-1.5">
           <h3 className="text-sm font-semibold text-card-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span>{resolvedTitle}</span>
-              {titleInfo && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      type="button"
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                      aria-label="Más información"
-                    >
-                      <Info className="w-3.5 h-3.5" />
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="max-w-xs text-xs">
-                    {titleInfo}
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </span>
+            {metric.title}
           </h3>
+          {metric.titleInfo && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground hover:text-foreground transition-colors"
+                    aria-label="Más información"
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs text-xs">
+                  {metric.titleInfo}
+                </TooltipContent>
+              </Tooltip>
+            )}
+            </span>
+
         </div>
 
-        {metric && (
-          <MetricActions
-            metric={metric}
-            onRemove={onRemove}
-            onDuplicate={onDuplicate}
-          />
-        )}
+        <MetricActions
+          metricId={metric.id}
+          onRemove={onRemove}
+          onDuplicate={onDuplicate}
+        />
       </div>
 
-      {metric && (
-        <div className="flex items-end gap-2 mb-3">
-          <span className="text-2xl font-bold text-card-foreground">
-            {metric.value}
-          </span>
+      <div className="flex items-end gap-2 mb-4">
+        <span className="text-2xl font-bold text-card-foreground">
+        </span>
+      </div>
 
-          <span
-            className={`text-xs font-medium px-1.5 py-0.5 rounded-full ${
-              isPositive
-                ? 'bg-success/10 text-success'
-                : 'bg-destructive/10 text-destructive'
-            }`}
-          >
-            {isPositive ? '+' : ''}
-            {metric.change}%
-          </span>
-        </div>
-      )}
-
-      {isLoading ? (
-        <p className="text-xs text-muted-foreground">{loadingText}</p>
-      ) : resolvedHasData ? (
-        metric ? (
-          <MiniChart
-            data={metric.data}
-            type={metric.chartType}
-          />
-        ) : (
-          children
-        )
+      {metric.isLoading ? (
+        <p className="text-xs text-muted-foreground">
+          Cargando métrica...
+        </p>
+      ) : metric.hasData ? (
+        metric.renderContent?.()
       ) : (
-        <p className="text-xs text-muted-foreground">{emptyText}</p>
+        <p className="text-xs text-muted-foreground">
+          No hay datos para mostrar.
+        </p>
       )}
     </motion.div>
   );

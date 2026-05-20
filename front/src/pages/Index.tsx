@@ -32,12 +32,7 @@ export default function Index() {
 
         {state.viewMode === 'metrics' ? (
           <MetricsDashboard
-            metrics={state.metrics}
             selectedStoreId={state.selectedStoreId}
-            onRemoveMetric={state.removeMetric}
-            onDuplicateMetric={state.duplicateMetric}
-            onAddMetric={state.addMetric}
-            onReorderMetrics={state.reorderMetrics}
           />
         ) : (
           <PredictionsView selectedStoreId={state.selectedStoreId} />
