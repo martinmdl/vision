@@ -1,15 +1,22 @@
 from catboost import CatBoostRegressor
-import requests
 import pandas as pd
-from ..db.managementDB import getDataForML, getHolidays, getProducts
+import os
+from ..db.managementDB import getHolidays, getProducts
 from ..utils.weather import obtener_clima_proximos_dias
 
-async def predecir_7_dias():
+MODEL_DIR = "src/model"
+
+
+def getModelPath(id_sucursal: int):
+    return os.path.join(MODEL_DIR, f"catboost_model_{id_sucursal}.cbm")
+
+
+async def predecir_7_dias(id_sucursal: int):
 
     model = CatBoostRegressor()
-    model.load_model("src/model/catboost_model.cbm") 
+    model.load_model(getModelPath(id_sucursal))
 
-    df_products = getProducts()
+    df_products = getProducts(id_sucursal)
     features = [
         "nombre", "temp_avg", "temp_min", "temp_max", "humedad", "lluvia", "viento", "presion", "nubosidad", "feriado", "tipo_feriado", "dia_semana", "mes"
     ]

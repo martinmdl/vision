@@ -41,6 +41,6 @@ async def uploadFileService(file, id_sucursal: int):
 
     # machine learning PKL
     t3 = time.time()
-    generateML()
+    generateML(id_sucursal)
     print(f"[4] generateML: {time.time() - t3:.2f}s")
     print(f"[TOTAL]: {time.time() - t0:.2f}s")

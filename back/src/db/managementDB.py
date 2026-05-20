@@ -14,6 +14,8 @@ from src.db.querys import (
     createSucursalQuery,
     updateSucursalNombreQuery,
     updateSucursalActivoQuery,
+    getSucursalLastTrainingDateQuery,
+    updateSucursalLastTrainingDateQuery,
 )
 
 metadata = MetaData()
@@ -22,6 +24,7 @@ sucursal = Table(
     "sucursal", metadata,
     Column("id_sucursal", Integer, primary_key=True),
     Column("nombre", String),
+    Column("ultima_fecha_entrenamiento", Date),
     Column("creacion", Date),
     Column("actualizacion", Date),
     Column("activo", Boolean)
@@ -158,14 +161,14 @@ def getDBLastYear():
         last_year = result.scalar()
         return int(last_year) if last_year else None
 
-def getDataForML():
+def getDataForML(id_sucursal: int):
     with engine.connect() as conn:
-        result = conn.execute(text(unifyDataFrameQuery))
+        result = conn.execute(text(unifyDataFrameQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
     
-def getProducts():
+def getProducts(id_sucursal: int):
     with engine.connect() as conn:
-        result = conn.execute(text(getDBProducts))
+        result = conn.execute(text(getDBProducts), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 def getHolidays():
@@ -201,3 +204,20 @@ def updateSucursalNombre(id_sucursal, nombre):
 def updateSucursalActivo(id_sucursal, activo):
     with engine.begin() as conn:
         conn.execute(text(updateSucursalActivoQuery), {"id": id_sucursal, "activo": activo})
+
+
+def getSucursalLastTrainingDate(id_sucursal):
+    with engine.connect() as conn:
+        result = conn.execute(text(getSucursalLastTrainingDateQuery), {"id_sucursal": id_sucursal})
+        return result.scalar()
+
+
+def updateSucursalLastTrainingDate(id_sucursal, ultima_fecha_entrenamiento):
+    with engine.begin() as conn:
+        conn.execute(
+            text(updateSucursalLastTrainingDateQuery),
+            {
+                "id_sucursal": id_sucursal,
+                "ultima_fecha_entrenamiento": ultima_fecha_entrenamiento,
+            },
+        )
