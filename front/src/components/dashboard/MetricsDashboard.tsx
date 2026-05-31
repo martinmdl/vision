@@ -9,7 +9,7 @@ import {
   SortableContext, rectSortingStrategy, useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import type { Metric, DateRange } from '@/types/store';
+import type { Metric } from '@/types/store';
 import MetricCard from './MetricCard';
 import AddMetricModal from './AddMetricModal';
 import {
@@ -36,7 +36,8 @@ import {
 
 interface MetricsDashboardProps {
   selectedStoreId: number;
-  dateRange: DateRange;
+  startDate?: string;
+  endDate?: string;
 }
 
 function UpliftKpiCard({
@@ -162,7 +163,8 @@ function SortableMetric({
 
 export default function MetricsDashboard({
   selectedStoreId,
-  dateRange,
+  startDate,
+  endDate,
 }: MetricsDashboardProps) {
   const [metricIds, setMetricIds] = useState<string[]>([]);
   const [showAdd, setShowAdd] = useState(false);
@@ -215,8 +217,8 @@ export default function MetricsDashboard({
       setCategoryProfitabilityError('');
       setCalendarUpliftError('');
 
-      // fetch all metrics with a single call (idSucursal + date range)
-      const resp = await getAllMetrics(selectedStoreId, 10, dateRange);
+      // fetch all metrics with a single call (idSucursal + explicit date window)
+      const resp = await getAllMetrics(selectedStoreId, 10, startDate, endDate);
       if (!mounted) return;
 
       if (resp.status_code === 200 && resp.data) {
@@ -266,7 +268,7 @@ export default function MetricsDashboard({
     return () => {
       mounted = false;
     };
-  }, [selectedStoreId]);
+  }, [selectedStoreId, startDate, endDate]);
   
   const hasUploadedData =
       topProducts.length > 0 ||

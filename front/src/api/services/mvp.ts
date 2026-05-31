@@ -204,11 +204,11 @@ export interface FetchMetricsResponse {
 
 const _pendingFetches: Record<string, Promise<FetchMetricsResponse> | undefined> = {};
 
-export async function getAllMetrics(idSucursal: number, limit?: number, dateRange?: string): Promise<FetchMetricsResponse> {
-  const key = `${idSucursal}:${limit ?? ''}:${dateRange ?? ''}`;
+export async function getAllMetrics(idSucursal: number, limit?: number, startDate?: string, endDate?: string): Promise<FetchMetricsResponse> {
+  const key = `${idSucursal}:${limit ?? ''}:${startDate ?? ''}:${endDate ?? ''}`;
   if (_pendingFetches[key]) return _pendingFetches[key]!;
 
-  const p = fetchMetrics(idSucursal, undefined, limit, dateRange);
+  const p = fetchMetrics(idSucursal, undefined, limit, startDate, endDate);
   _pendingFetches[key] = p;
 
   try {
@@ -219,13 +219,14 @@ export async function getAllMetrics(idSucursal: number, limit?: number, dateRang
   }
 }
 
-export async function fetchMetrics(idSucursal: number, metrics?: string[], limit?: number, dateRange?: string): Promise<FetchMetricsResponse> {
+export async function fetchMetrics(idSucursal: number, metrics?: string[], limit?: number, startDate?: string, endDate?: string): Promise<FetchMetricsResponse> {
   try {
     const params = new URLSearchParams();
     params.append('id_sucursal', String(idSucursal));
     if (metrics && metrics.length) metrics.forEach(m => params.append('metrics', m));
     if (typeof limit === 'number') params.append('limit', String(limit));
-    if (dateRange) params.append('date_range', dateRange);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
 
     const response = await fetch(`${API_BASE_URL}/metrics?${params.toString()}`, {
       method: 'GET',

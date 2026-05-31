@@ -7,7 +7,21 @@ import { useStoreState } from '@/hooks/useStoreState';
 export default function Index() {
   const state = useStoreState();
   const selectedStore = state.allStores.find(s => s.id === state.selectedStoreId);
+  function computeRange(range: string | undefined) {
+    if (!range) return { startDate: undefined, endDate: undefined };
+    const today = new Date();
+    const endDate = today.toISOString().slice(0, 10);
+    let start: Date | undefined;
+    if (range === '7d') start = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
+    else if (range === '30d') start = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    else if (range === '90d') start = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+    else return { startDate: undefined, endDate: undefined };
 
+    const startDate = start.toISOString().slice(0, 10);
+    return { startDate, endDate };
+  }
+
+  const { startDate, endDate } = computeRange(state.dateRange);
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar
@@ -33,7 +47,8 @@ export default function Index() {
         {state.viewMode === 'metrics' ? (
           <MetricsDashboard
             selectedStoreId={state.selectedStoreId}
-            dateRange={state.dateRange}
+            startDate={startDate}
+            endDate={endDate}
           />
         ) : (
           <PredictionsView selectedStoreId={state.selectedStoreId} />
