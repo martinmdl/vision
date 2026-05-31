@@ -1,4 +1,6 @@
 from fastapi import APIRouter, Query
+from typing import List, Dict, Any, Optional
+import inspect
 from ..services.metricsService import (
     get_top_sold_products,
     get_top_profitable_products,
@@ -11,97 +13,55 @@ from ..services.metricsService import (
 router = APIRouter(prefix="", tags=["Metrics"])
 
 
-@router.get("/metrics/top-sold")
-async def top_sold_products(id_sucursal: int = Query(..., ge=1), limit: int = Query(default=10, ge=1, le=100)):
-    try:
-        data = await get_top_sold_products(id_sucursal, limit)
-        return {
-            "status_code": 200,
-            "message": "Top productos vendido obtenido",
-            "data": data,
-        }
-    except Exception as e:
-        return {
-            "status_code": 500,
-            "message": f"Error interno del servidor: {str(e)}",
-        }
+METRICS_MAP = {
+    "top_sold": get_top_sold_products,
+    "top_profitable": get_top_profitable_products,
+    "weather_impact_income": get_weather_impact_income,
+    "calendar_impact_income": get_calendar_impact_income,
+    "calendar_uplift": get_calendar_uplift,
+    "category_profitability": get_category_profitability,
+}
 
 
-@router.get("/metrics/top-profitable")
-async def top_profitable_products(id_sucursal: int = Query(..., ge=1), limit: int = Query(default=10, ge=1, le=100)):
-    try:
-        data = await get_top_profitable_products(id_sucursal, limit)
-        return {
-            "status_code": 200,
-            "message": "Top productos rentables obtenido",
-            "data": data,
-        }
-    except Exception as e:
-        return {
-            "status_code": 500,
-            "message": f"Error interno del servidor: {str(e)}",
-        }
+@router.get("/metrics")
+async def fetch_metrics(
+    id_sucursal: int = Query(..., ge=1),
+    metrics: Optional[List[str]] = Query(None),
+    limit: int = Query(default=10, ge=1, le=100),
+    date_range: Optional[str] = Query(None),
+):
+    """Fetch multiple metrics in a single call.
 
+    Example: /metrics?id_sucursal=1&metrics=top_sold&metrics=weather_impact_income&limit=5
+    """
+    # if no specific metrics requested, return all available metrics
+    if not metrics:
+        metrics = list(METRICS_MAP.keys())
 
-@router.get("/metrics/weather-impact-income")
-async def weather_impact_income(id_sucursal: int = Query(..., ge=1)):
-    try:
-        data = await get_weather_impact_income(id_sucursal)
-        return {
-            "status_code": 200,
-            "message": "Impacto de clima adverso obtenido",
-            "data": data,
-        }
-    except Exception as e:
-        return {
-            "status_code": 500,
-            "message": f"Error interno del servidor: {str(e)}",
-        }
+    results: Dict[str, Any] = {}
+    for m in metrics:
+        func = METRICS_MAP.get(m)
+        if not func:
+            results[m] = {"status_code": 400, "message": "Unknown metric"}
+            continue
+        try:
+            sig = inspect.signature(func)
+            params = list(sig.parameters.keys())
+            # build args in parameter order (skip first param which should be id_sucursal)
+            args = [id_sucursal]
+            for p in params[1:]:
+                lp = p.lower()
+                if lp == 'limit':
+                    args.append(limit)
+                elif 'date' in lp or 'start' in lp or 'end' in lp:
+                    args.append(date_range)
+                else:
+                    # unknown param, append None
+                    args.append(None)
 
+            data = await func(*args)
+            results[m] = {"status_code": 200, "data": data}
+        except Exception as e:
+            results[m] = {"status_code": 500, "message": f"Error interno del servidor: {str(e)}"}
 
-@router.get("/metrics/calendar-impact-income")
-async def calendar_impact_income(id_sucursal: int = Query(..., ge=1)):
-    try:
-        data = await get_calendar_impact_income(id_sucursal)
-        return {
-            "status_code": 200,
-            "message": "Comparativa de tipos de dia obtenida",
-            "data": data,
-        }
-    except Exception as e:
-        return {
-            "status_code": 500,
-            "message": f"Error interno del servidor: {str(e)}",
-        }
-
-
-@router.get("/metrics/calendar-uplift")
-async def calendar_uplift(id_sucursal: int = Query(..., ge=1)):
-    try:
-        data = await get_calendar_uplift(id_sucursal)
-        return {
-            "status_code": 200,
-            "message": "Incrementos por tipo de dia obtenidos",
-            "data": data,
-        }
-    except Exception as e:
-        return {
-            "status_code": 500,
-            "message": f"Error interno del servidor: {str(e)}",
-        }
-
-
-@router.get("/metrics/category-profitability")
-async def category_profitability(id_sucursal: int = Query(..., ge=1)):
-    try:
-        data = await get_category_profitability(id_sucursal)
-        return {
-            "status_code": 200,
-            "message": "Rentabilidad por categoria obtenida",
-            "data": data,
-        }
-    except Exception as e:
-        return {
-            "status_code": 500,
-            "message": f"Error interno del servidor: {str(e)}",
-        }
+    return {"status_code": 200, "message": "Metrics fetched", "data": results}

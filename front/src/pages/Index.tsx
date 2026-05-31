@@ -33,6 +33,7 @@ export default function Index() {
         {state.viewMode === 'metrics' ? (
           <MetricsDashboard
             selectedStoreId={state.selectedStoreId}
+            dateRange={state.dateRange}
           />
         ) : (
           <PredictionsView selectedStoreId={state.selectedStoreId} />
