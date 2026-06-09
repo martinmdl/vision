@@ -92,6 +92,8 @@ getTopSoldProductsQuery = """
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
     AND (dv.activo IS NULL OR dv.activo = TRUE)
     AND v.id_sucursal = :id_sucursal
+    AND (:start_date IS NULL OR v.creacion::date >= CAST(:start_date AS DATE))
+    AND (:end_date IS NULL OR v.creacion::date <= CAST(:end_date AS DATE))
     GROUP BY p.nombre
     ORDER BY total_vendido DESC
     LIMIT :limit;
@@ -155,6 +157,8 @@ getTopProfitableProductsQuery = """
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
         AND (dv.activo IS NULL OR dv.activo = TRUE)
         AND v.id_sucursal = :id_sucursal
+        AND (:start_date IS NULL OR v.creacion::date >= CAST(:start_date AS DATE))
+        AND (:end_date IS NULL OR v.creacion::date <= CAST(:end_date AS DATE))
     GROUP BY p.nombre
     ORDER BY total_ganancia DESC
     LIMIT :limit;
@@ -178,6 +182,8 @@ getWeatherImpactIncomeQuery = """
         ON c.fecha = v.creacion
     WHERE (v.activo IS NULL OR v.activo = TRUE)
         AND v.id_sucursal = :id_sucursal
+        AND (:start_date IS NULL OR v.creacion::date >= CAST(:start_date AS DATE))
+        AND (:end_date IS NULL OR v.creacion::date <= CAST(:end_date AS DATE))
     GROUP BY TO_CHAR(v.creacion, 'YYYY-MM'), EXTRACT(YEAR FROM v.creacion), EXTRACT(MONTH FROM v.creacion)
     ORDER BY EXTRACT(YEAR FROM v.creacion), EXTRACT(MONTH FROM v.creacion);
 """
@@ -190,6 +196,8 @@ getCalendarImpactIncomeQuery = """
         FROM ventas v
         WHERE (v.activo IS NULL OR v.activo = TRUE)
             AND v.id_sucursal = :id_sucursal
+            AND (:start_date IS NULL OR v.creacion::date >= CAST(:start_date AS DATE))
+            AND (:end_date IS NULL OR v.creacion::date <= CAST(:end_date AS DATE))
         GROUP BY v.creacion::date
     ),
     clasificacion_dias AS (
@@ -236,6 +244,8 @@ getCalendarUpliftQuery = """
         FROM ventas v
         WHERE (v.activo IS NULL OR v.activo = TRUE)
             AND v.id_sucursal = :id_sucursal
+            AND (:start_date IS NULL OR v.creacion::date >= CAST(:start_date AS DATE))
+            AND (:end_date IS NULL OR v.creacion::date <= CAST(:end_date AS DATE))
         GROUP BY v.creacion::date
     ),
     clasificacion_dias AS (
@@ -264,11 +274,16 @@ getCalendarUpliftQuery = """
         COALESCE(((ingreso_fin_semana - ingreso_normal) / NULLIF(ingreso_normal, 0)) * 100, 0) AS incremento_fin_semana
     FROM promedios;
 """
-
 getCategoryProfitabilityQuery = """
     SELECT
         COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria') AS categoria,
-        COALESCE(SUM(COALESCE(dv.cantidad, 0) * (COALESCE(dv.precio, 0) - COALESCE(dv.costo, 0))), 0) AS total_ganancia
+        COALESCE(
+            SUM(
+                COALESCE(dv.cantidad, 0) *
+                (COALESCE(dv.precio, 0) - COALESCE(dv.costo, 0))
+            ),
+            0
+        ) AS total_ganancia
     FROM detalle_ventas dv
     INNER JOIN productos p
         ON p.id_producto = dv.id_producto
@@ -277,6 +292,8 @@ getCategoryProfitabilityQuery = """
     WHERE (dv.cancelada IS NULL OR dv.cancelada = FALSE)
         AND (dv.activo IS NULL OR dv.activo = TRUE)
         AND v.id_sucursal = :id_sucursal
+        AND (:start_date IS NULL OR v.creacion::date >= CAST(:start_date AS DATE))
+        AND (:end_date IS NULL OR v.creacion::date <= CAST(:end_date AS DATE))
     GROUP BY COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria')
     ORDER BY total_ganancia DESC;
 """

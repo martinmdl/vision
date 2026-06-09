@@ -189,9 +189,10 @@ def getHolidays():
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getTopSoldProducts(id_sucursal, limit=10):
+def getTopSoldProducts(id_sucursal, limit=10, start_date=None, end_date=None):
     with engine.connect() as conn:
-        result = conn.execute(text(getTopSoldProductsQuery), {"id_sucursal": id_sucursal, "limit": limit})
+        params = {"id_sucursal": id_sucursal, "limit": limit, "start_date": start_date, "end_date": end_date}
+        result = conn.execute(text(getTopSoldProductsQuery), params)
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
@@ -233,33 +234,38 @@ def updateSucursalLastTrainingDate(id_sucursal, ultima_fecha_entrenamiento):
                 "ultima_fecha_entrenamiento": ultima_fecha_entrenamiento,
             },
         )
-def getTopProfitableProducts(id_sucursal, limit=10):
+def getTopProfitableProducts(id_sucursal, limit=10, start_date=None, end_date=None):
     with engine.connect() as conn:
-        result = conn.execute(text(getTopProfitableProductsQuery), {"id_sucursal": id_sucursal, "limit": limit})
+        params = {"id_sucursal": id_sucursal, "limit": limit, "start_date": start_date, "end_date": end_date}
+        result = conn.execute(text(getTopProfitableProductsQuery), params)
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getWeatherImpactIncome(id_sucursal):
+def getWeatherImpactIncome(id_sucursal, start_date=None, end_date=None):
     with engine.connect() as conn:
-        result = conn.execute(text(getWeatherImpactIncomeQuery), {"id_sucursal": id_sucursal})
+        params = {"id_sucursal": id_sucursal, "start_date": start_date, "end_date": end_date}
+        result = conn.execute(text(getWeatherImpactIncomeQuery), params)
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getCalendarImpactIncome(id_sucursal):
+def getCalendarImpactIncome(id_sucursal, start_date=None, end_date=None):
     with engine.connect() as conn:
-        result = conn.execute(text(getCalendarImpactIncomeQuery), {"id_sucursal": id_sucursal})
+        params = {"id_sucursal": id_sucursal, "start_date": start_date, "end_date": end_date}
+        result = conn.execute(text(getCalendarImpactIncomeQuery), params)
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getCalendarUplift(id_sucursal):
+def getCalendarUplift(id_sucursal, start_date=None, end_date=None):
     with engine.connect() as conn:
-        result = conn.execute(text(getCalendarUpliftQuery), {"id_sucursal": id_sucursal})
+        params = {"id_sucursal": id_sucursal, "start_date": start_date, "end_date": end_date}
+        result = conn.execute(text(getCalendarUpliftQuery), params)
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
-def getCategoryProfitability(id_sucursal):
+def getCategoryProfitability(id_sucursal, start_date=None, end_date=None):
     with engine.connect() as conn:
-        result = conn.execute(text(getCategoryProfitabilityQuery), {"id_sucursal": id_sucursal})
+        params = {"id_sucursal": id_sucursal, "start_date": start_date, "end_date": end_date}
+        result = conn.execute(text(getCategoryProfitabilityQuery), params)
         return pd.DataFrame(result.fetchall(), columns=result.keys())
 
 
