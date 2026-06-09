@@ -79,6 +79,47 @@ export interface CategoryProfitabilityResponse {
   data?: CategoryProfitabilityItem[];
 }
 
+export interface ProcessedDataOverview {
+  sales_rows: number;
+  products_rows: number;
+  sale_detail_rows: number;
+  sales_days: number;
+  total_income: number;
+  first_sale_date: string | null;
+  last_sale_date: string | null;
+}
+
+export interface ProcessedDataPipelineItem {
+  source_sheet: string;
+  target_table: string;
+  rows: number;
+}
+
+export interface ProcessedDataCategoryItem {
+  name: string;
+  products_count: number;
+}
+
+export interface ProcessedDataSaleItem {
+  id_venta: number;
+  sale_date: string | null;
+  total: number;
+  sale_type: string;
+}
+
+export interface ProcessedDataSummaryPayload {
+  overview: ProcessedDataOverview;
+  pipeline: ProcessedDataPipelineItem[];
+  top_categories: ProcessedDataCategoryItem[];
+  sales_sample: ProcessedDataSaleItem[];
+}
+
+export interface ProcessedDataSummaryResponse {
+  status_code: number;
+  message: string;
+  data?: ProcessedDataSummaryPayload;
+}
+
 export interface UploadResponse {
   status_code: number;
   message: string;
@@ -102,22 +143,51 @@ export async function uploadFile(
   return new Promise((resolve) => {
     const xhr = new XMLHttpRequest();
     const formData = new FormData();
+    let uploadFinished = false;
+    let waitTick = 0;
+
+    const processingStages = [
+      'Scanning data',
+      'Extracting worksheet rows',
+      'Normalizing values',
+      'Saving into Postgres',
+      'Final quality checks',
+    ];
+
     formData.append('file', file);
     
     if (idSucursal !== null && idSucursal !== undefined) {
       formData.append('id_sucursal', String(idSucursal));
     }
 
-    onStageChange?.('Preparando archivo');
+    onStageChange?.('Preparing upload');
     onProgress?.(5);
+
+    const waitingInterval = window.setInterval(() => {
+      if (!uploadFinished) {
+        return;
+      }
+
+      waitTick += 1;
+      const stageIndex = Math.min(processingStages.length - 1, Math.floor(waitTick / 3));
+      const progress = Math.min(96, 86 + waitTick);
+      onStageChange?.(processingStages[stageIndex]);
+      onProgress?.(progress);
+    }, 250);
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable) return;
 
       const uploadRatio = event.loaded / event.total;
-      const progress = Math.min(85, Math.round(10 + uploadRatio * 75));
-      onStageChange?.('Subiendo archivo');
+      const progress = Math.min(84, Math.round(10 + uploadRatio * 74));
+      onStageChange?.('Uploading workbook');
       onProgress?.(progress);
+    };
+
+    xhr.upload.onload = () => {
+      uploadFinished = true;
+      onStageChange?.('Workbook uploaded');
+      onProgress?.(86);
     };
 
     xhr.onload = () => {
@@ -129,8 +199,9 @@ export async function uploadFile(
         payload = null;
       }
 
-      onStageChange?.('Procesando datos');
-      onProgress?.(95);
+      window.clearInterval(waitingInterval);
+      onStageChange?.('Completing import');
+      onProgress?.(98);
 
       if (payload && typeof payload.status_code === 'number') {
         onStageChange?.('Completado');
@@ -150,6 +221,7 @@ export async function uploadFile(
     };
 
     xhr.onerror = () => {
+      window.clearInterval(waitingInterval);
       resolve({
         status_code: 500,
         message: 'No se pudo conectar con el backend.',
@@ -349,6 +421,34 @@ export async function getCategoryProfitability(idSucursal: number): Promise<Cate
       status_code: response.ok ? 200 : response.status,
       message: response.ok ? 'Rentabilidad por categoria obtenida' : 'Error al obtener rentabilidad por categoria',
       data: Array.isArray(payload?.data) ? payload.data : undefined,
+    };
+  } catch {
+    return {
+      status_code: 500,
+      message: 'No se pudo conectar con el backend.',
+    };
+  }
+}
+
+export async function getProcessedDataSummary(idSucursal: number): Promise<ProcessedDataSummaryResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/metrics/processed-data-summary?id_sucursal=${idSucursal}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    const payload = await response.json();
+
+    if (typeof payload?.status_code === 'number') {
+      return payload as ProcessedDataSummaryResponse;
+    }
+
+    return {
+      status_code: response.ok ? 200 : response.status,
+      message: response.ok ? 'Resumen de datos procesados obtenido' : 'Error al obtener resumen de datos procesados',
+      data: payload?.data,
     };
   } catch {
     return {

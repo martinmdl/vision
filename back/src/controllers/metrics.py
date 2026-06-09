@@ -6,6 +6,7 @@ from ..services.metricsService import (
     get_calendar_impact_income,
     get_calendar_uplift,
     get_category_profitability,
+    get_processed_data_summary,
 )
 
 router = APIRouter(prefix="", tags=["Metrics"])
@@ -98,6 +99,22 @@ async def category_profitability(id_sucursal: int = Query(..., ge=1)):
         return {
             "status_code": 200,
             "message": "Rentabilidad por categoria obtenida",
+            "data": data,
+        }
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "message": f"Error interno del servidor: {str(e)}",
+        }
+
+
+@router.get("/metrics/processed-data-summary")
+async def processed_data_summary(id_sucursal: int = Query(..., ge=1)):
+    try:
+        data = await get_processed_data_summary(id_sucursal)
+        return {
+            "status_code": 200,
+            "message": "Resumen de datos procesados obtenido",
             "data": data,
         }
     except Exception as e:

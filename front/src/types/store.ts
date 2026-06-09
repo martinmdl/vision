@@ -23,7 +23,7 @@ export interface Metric {
   renderContent?: () => ReactNode;
 }
 
-export type ViewMode = 'metrics' | 'predictions';
+export type ViewMode = 'metrics' | 'predictions' | 'data';
 export type GridColumns = 1 | 2;
 export type DateRange = '7d' | '30d' | '90d' | 'custom';
 

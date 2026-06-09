@@ -2,6 +2,7 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import TopBar from '@/components/dashboard/TopBar';
 import MetricsDashboard from '@/components/dashboard/MetricsDashboard';
 import PredictionsView from '@/components/dashboard/PredictionsView';
+import DataView from '@/components/dashboard/DataView';
 import { useStoreState } from '@/hooks/useStoreState';
 
 export default function Index() {
@@ -34,8 +35,10 @@ export default function Index() {
           <MetricsDashboard
             selectedStoreId={state.selectedStoreId}
           />
-        ) : (
+        ) : state.viewMode === 'predictions' ? (
           <PredictionsView selectedStoreId={state.selectedStoreId} />
+        ) : (
+          <DataView selectedStoreId={state.selectedStoreId} />
         )}
       </main>
     </div>

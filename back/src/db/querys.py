@@ -280,3 +280,51 @@ getCategoryProfitabilityQuery = """
     GROUP BY COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria')
     ORDER BY total_ganancia DESC;
 """
+
+getProcessedDataSummaryQuery = """
+    SELECT
+        COALESCE(COUNT(v.id_venta), 0) AS sales_rows,
+        COALESCE(COUNT(DISTINCT v.creacion::date), 0) AS sales_days,
+        COALESCE(SUM(v.total), 0) AS total_income,
+        MIN(v.creacion::date) AS first_sale_date,
+        MAX(v.creacion::date) AS last_sale_date,
+        COALESCE((
+            SELECT COUNT(*)
+            FROM productos p
+            WHERE p.id_sucursal = :id_sucursal
+        ), 0) AS products_rows,
+        COALESCE((
+            SELECT COUNT(*)
+            FROM detalle_ventas dv
+            INNER JOIN ventas v2
+                ON v2.id_venta = dv.id_venta
+            WHERE v2.id_sucursal = :id_sucursal
+        ), 0) AS sale_detail_rows
+    FROM ventas v
+    WHERE (v.activo IS NULL OR v.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal;
+"""
+
+getProcessedDataCategoriesQuery = """
+    SELECT
+        COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria') AS category,
+        COUNT(*) AS products_count
+    FROM productos p
+    WHERE p.id_sucursal = :id_sucursal
+    GROUP BY COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria')
+    ORDER BY products_count DESC, category ASC
+    LIMIT 6;
+"""
+
+getProcessedDataRecentSalesQuery = """
+    SELECT
+        v.id_venta,
+        v.creacion::date AS sale_date,
+        COALESCE(v.total, 0) AS total,
+        COALESCE(v.tipo, '-') AS sale_type
+    FROM ventas v
+    WHERE (v.activo IS NULL OR v.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal
+    ORDER BY v.creacion DESC, v.id_venta DESC
+    LIMIT 8;
+"""

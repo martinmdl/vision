@@ -132,27 +132,35 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
   const handleGeneratePredictions = async () => {
     setIsLoading(true);
     setPredictMessage('');
-    setPredictProgress(8);
-    setPredictStage('Preparando datos');
+    setPredictProgress(6);
+    setPredictStage('Scanning historical sales');
+
+    const predictionStages = [
+      'Scanning historical sales',
+      'Extracting seasonality signals',
+      'Encoding weather and holiday features',
+      'Running CatBoost inference',
+      'Calibrating product-level demand',
+      'Preparing dashboard outputs',
+    ];
 
     const progressTimer = window.setInterval(() => {
       setPredictProgress((current) => {
-        if (current >= 92) return current;
-        if (current < 30) {
-          setPredictStage('Enviando solicitud');
-        } else if (current < 65) {
-          setPredictStage('Ejecutando modelo');
-        } else {
-          setPredictStage('Procesando resultados');
-        }
-        return current + 4;
+        if (current >= 94) return current;
+        const next = current + (current < 40 ? 3 : current < 75 ? 2 : 1);
+        const stageIndex = Math.min(
+          predictionStages.length - 1,
+          Math.floor((next / 95) * predictionStages.length)
+        );
+        setPredictStage(predictionStages[stageIndex]);
+        return next;
       });
-    }, 300);
+    }, 180);
 
     const response = await predict(selectedStoreId);
     window.clearInterval(progressTimer);
     setPredictProgress(100);
-    setPredictStage('Completado');
+    setPredictStage('Completed');
 
     if (response.status_code === 200 && Array.isArray(response.data)) {
       setBackendHeatmap(buildHeatmapFromPredictions(response.data));
@@ -176,9 +184,19 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
           disabled={isLoading}
           className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60"
         >
-          {isLoading ? 'Generando...' : 'Generar predicciones'}
+          {isLoading ? 'Generando predicciones...' : 'Generar predicciones'}
         </button>
       </div>
+
+      {isLoading && (
+        <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-4">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{predictStage}</span>
+            <span>{predictProgress}%</span>
+          </div>
+          <Progress value={predictProgress} className="h-2" />
+        </div>
+      )}
 
       {predictMessage && (
         <p className="text-xs text-muted-foreground">{predictMessage}</p>
@@ -194,16 +212,6 @@ export default function PredictionsView({ selectedStoreId }: PredictionsViewProp
         </div>
       ) : (
         <>
-
-      {isLoading && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span>{predictStage}</span>
-            <span>{predictProgress}%</span>
-          </div>
-          <Progress value={predictProgress} className="h-2" />
-        </div>
-      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-3 gap-4">

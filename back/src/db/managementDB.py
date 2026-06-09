@@ -21,6 +21,9 @@ from src.db.querys import (
     getCalendarImpactIncomeQuery,
     getCalendarUpliftQuery,
     getCategoryProfitabilityQuery,
+    getProcessedDataSummaryQuery,
+    getProcessedDataCategoriesQuery,
+    getProcessedDataRecentSalesQuery,
 )
 
 metadata = MetaData()
@@ -254,3 +257,27 @@ def getCategoryProfitability(id_sucursal):
     with engine.connect() as conn:
         result = conn.execute(text(getCategoryProfitabilityQuery), {"id_sucursal": id_sucursal})
         return pd.DataFrame(result.fetchall(), columns=result.keys())
+
+
+def getProcessedDataSummary(id_sucursal):
+    with engine.connect() as conn:
+        summary_row = conn.execute(
+            text(getProcessedDataSummaryQuery),
+            {"id_sucursal": id_sucursal},
+        ).mappings().first()
+
+        category_rows = conn.execute(
+            text(getProcessedDataCategoriesQuery),
+            {"id_sucursal": id_sucursal},
+        ).mappings().all()
+
+        recent_sales_rows = conn.execute(
+            text(getProcessedDataRecentSalesQuery),
+            {"id_sucursal": id_sucursal},
+        ).mappings().all()
+
+    return {
+        "summary": dict(summary_row) if summary_row else {},
+        "categories": [dict(row) for row in category_rows],
+        "recent_sales": [dict(row) for row in recent_sales_rows],
+    }

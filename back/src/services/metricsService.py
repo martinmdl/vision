@@ -5,6 +5,7 @@ from ..db.managementDB import (
     getCalendarImpactIncome,
     getCalendarUplift,
     getCategoryProfitability,
+    getProcessedDataSummary,
 )
 
 
@@ -89,3 +90,55 @@ async def get_category_profitability(id_sucursal):
         })
 
     return profitability
+
+
+async def get_processed_data_summary(id_sucursal):
+    payload = getProcessedDataSummary(id_sucursal)
+
+    summary = payload.get("summary", {})
+    categories = payload.get("categories", [])
+    recent_sales = payload.get("recent_sales", [])
+
+    first_sale_date = summary.get("first_sale_date")
+    last_sale_date = summary.get("last_sale_date")
+
+    overview = {
+        "sales_rows": int(summary.get("sales_rows") or 0),
+        "products_rows": int(summary.get("products_rows") or 0),
+        "sale_detail_rows": int(summary.get("sale_detail_rows") or 0),
+        "sales_days": int(summary.get("sales_days") or 0),
+        "total_income": float(summary.get("total_income") or 0),
+        "first_sale_date": first_sale_date.isoformat() if first_sale_date else None,
+        "last_sale_date": last_sale_date.isoformat() if last_sale_date else None,
+    }
+
+    pipeline = [
+        {"source_sheet": "Ventas", "target_table": "ventas", "rows": overview["sales_rows"]},
+        {"source_sheet": "Productos", "target_table": "productos", "rows": overview["products_rows"]},
+        {"source_sheet": "Adiciones", "target_table": "detalle_ventas", "rows": overview["sale_detail_rows"]},
+    ]
+
+    top_categories = [
+        {
+            "name": row.get("category"),
+            "products_count": int(row.get("products_count") or 0),
+        }
+        for row in categories
+    ]
+
+    sales_sample = [
+        {
+            "id_venta": int(row.get("id_venta") or 0),
+            "sale_date": row.get("sale_date").isoformat() if row.get("sale_date") else None,
+            "total": float(row.get("total") or 0),
+            "sale_type": row.get("sale_type") or "-",
+        }
+        for row in recent_sales
+    ]
+
+    return {
+        "overview": overview,
+        "pipeline": pipeline,
+        "top_categories": top_categories,
+        "sales_sample": sales_sample,
+    }
