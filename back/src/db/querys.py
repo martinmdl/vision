@@ -328,3 +328,64 @@ getProcessedDataRecentSalesQuery = """
     ORDER BY v.creacion DESC, v.id_venta DESC
     LIMIT 8;
 """
+
+getProcessedDataProductsCatalogQuery = """
+    SELECT
+        p.id_producto,
+        p.nombre AS product_name,
+        COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria') AS category
+    FROM productos p
+    WHERE p.id_sucursal = :id_sucursal
+    ORDER BY category ASC, product_name ASC;
+"""
+
+getProcessedSalesByDateRangeQuery = """
+    SELECT
+        v.id_venta,
+        v.creacion::date AS sale_date,
+        COALESCE(v.total, 0) AS total,
+        COALESCE(v.tipo, '-') AS sale_type
+    FROM ventas v
+    WHERE (v.activo IS NULL OR v.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal
+        AND (:start_date IS NULL OR v.creacion::date >= :start_date)
+        AND (:end_date IS NULL OR v.creacion::date <= :end_date)
+    ORDER BY v.creacion DESC, v.id_venta DESC
+    LIMIT :limit;
+"""
+
+getSaleDetailBySaleIdQuery = """
+    SELECT
+        dv.id_detalle,
+        dv.id_producto,
+        COALESCE(p.nombre, '-') AS product_name,
+        COALESCE(NULLIF(TRIM(p.categoria), ''), 'Sin categoria') AS category,
+        COALESCE(dv.cantidad, 0) AS quantity,
+        COALESCE(dv.precio, 0) AS unit_price,
+        COALESCE(dv.costo, 0) AS unit_cost,
+        COALESCE(dv.cancelada, FALSE) AS cancelled,
+        COALESCE(dv.cantidad, 0) * COALESCE(dv.precio, 0) AS subtotal,
+        COALESCE(dv.cantidad, 0) * (COALESCE(dv.precio, 0) - COALESCE(dv.costo, 0)) AS profit
+    FROM detalle_ventas dv
+    INNER JOIN ventas v
+        ON v.id_venta = dv.id_venta
+    LEFT JOIN productos p
+        ON p.id_producto = dv.id_producto
+    WHERE v.id_sucursal = :id_sucursal
+        AND v.id_venta = :id_venta
+    ORDER BY dv.id_detalle ASC;
+"""
+
+getTotalIncomeKpiQuery = """
+    SELECT
+        COALESCE(SUM(v.total), 0) AS total_income,
+        COALESCE(COUNT(*), 0) AS total_sales,
+        COALESCE(COUNT(DISTINCT v.creacion::date), 0) AS sales_days,
+        COALESCE(
+            SUM(v.total) / NULLIF(COUNT(DISTINCT v.creacion::date), 0),
+            0
+        ) AS avg_daily_income
+    FROM ventas v
+    WHERE (v.activo IS NULL OR v.activo = TRUE)
+        AND v.id_sucursal = :id_sucursal;
+"""

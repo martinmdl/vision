@@ -20,16 +20,16 @@ export default function TopBar({
   storeName,
 }: TopBarProps) {
   const viewLabel = viewMode === 'metrics'
-    ? 'métricas'
+    ? 'Métricas'
     : viewMode === 'predictions'
-      ? 'predicciones'
-      : 'datos';
+      ? 'Predicciones'
+      : 'Datos';
 
   return (
     <div className="flex items-center justify-between mb-6 sticky top-0 z-50 bg-white p-8 border border-gray-300 rounded-2xl shadow-sm">
       <div>
         <h2 className="text-lg font-bold text-foreground tracking-tight">{storeName}</h2>
-        <p className="text-xs text-muted-foreground capitalize">Vista de {viewLabel}</p>
+        <p className="text-xs text-muted-foreground">Vision | {storeName} | {viewLabel}</p>
       </div>
 
       <div className="flex items-center gap-3">

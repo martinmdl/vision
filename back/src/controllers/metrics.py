@@ -1,3 +1,4 @@
+from datetime import date
 from fastapi import APIRouter, Query
 from ..services.metricsService import (
     get_top_sold_products,
@@ -7,6 +8,10 @@ from ..services.metricsService import (
     get_calendar_uplift,
     get_category_profitability,
     get_processed_data_summary,
+    get_processed_products_catalog,
+    get_processed_sales_table,
+    get_sale_detail,
+    get_total_income_kpi,
 )
 
 router = APIRouter(prefix="", tags=["Metrics"])
@@ -115,6 +120,77 @@ async def processed_data_summary(id_sucursal: int = Query(..., ge=1)):
         return {
             "status_code": 200,
             "message": "Resumen de datos procesados obtenido",
+            "data": data,
+        }
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "message": f"Error interno del servidor: {str(e)}",
+        }
+
+
+@router.get("/metrics/processed-products-catalog")
+async def processed_products_catalog(id_sucursal: int = Query(..., ge=1)):
+    try:
+        data = await get_processed_products_catalog(id_sucursal)
+        return {
+            "status_code": 200,
+            "message": "Catalogo de productos procesados obtenido",
+            "data": data,
+        }
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "message": f"Error interno del servidor: {str(e)}",
+        }
+
+
+@router.get("/metrics/processed-sales")
+async def processed_sales(
+    id_sucursal: int = Query(..., ge=1),
+    start_date: date | None = Query(default=None),
+    end_date: date | None = Query(default=None),
+):
+    try:
+        data = await get_processed_sales_table(id_sucursal, start_date=start_date, end_date=end_date)
+        return {
+            "status_code": 200,
+            "message": "Ventas procesadas obtenidas",
+            "data": data,
+        }
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "message": f"Error interno del servidor: {str(e)}",
+        }
+
+
+@router.get("/metrics/sale-detail")
+async def sale_detail(
+    id_sucursal: int = Query(..., ge=1),
+    id_venta: int = Query(..., ge=1),
+):
+    try:
+        data = await get_sale_detail(id_sucursal, id_venta)
+        return {
+            "status_code": 200,
+            "message": "Detalle de venta obtenido",
+            "data": data,
+        }
+    except Exception as e:
+        return {
+            "status_code": 500,
+            "message": f"Error interno del servidor: {str(e)}",
+        }
+
+
+@router.get("/metrics/total-income")
+async def total_income(id_sucursal: int = Query(..., ge=1)):
+    try:
+        data = await get_total_income_kpi(id_sucursal)
+        return {
+            "status_code": 200,
+            "message": "KPI de ingreso total obtenido",
             "data": data,
         }
     except Exception as e:

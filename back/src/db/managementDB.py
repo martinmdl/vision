@@ -24,6 +24,10 @@ from src.db.querys import (
     getProcessedDataSummaryQuery,
     getProcessedDataCategoriesQuery,
     getProcessedDataRecentSalesQuery,
+    getProcessedDataProductsCatalogQuery,
+    getProcessedSalesByDateRangeQuery,
+    getSaleDetailBySaleIdQuery,
+    getTotalIncomeKpiQuery,
 )
 
 metadata = MetaData()
@@ -281,3 +285,51 @@ def getProcessedDataSummary(id_sucursal):
         "categories": [dict(row) for row in category_rows],
         "recent_sales": [dict(row) for row in recent_sales_rows],
     }
+
+
+def getProcessedProductsCatalog(id_sucursal):
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text(getProcessedDataProductsCatalogQuery),
+            {"id_sucursal": id_sucursal},
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
+
+
+def getProcessedSalesByDateRange(id_sucursal, start_date=None, end_date=None, limit=150):
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text(getProcessedSalesByDateRangeQuery),
+            {
+                "id_sucursal": id_sucursal,
+                "start_date": start_date,
+                "end_date": end_date,
+                "limit": limit,
+            },
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
+
+
+def getSaleDetailBySaleId(id_sucursal, id_venta):
+    with engine.connect() as conn:
+        rows = conn.execute(
+            text(getSaleDetailBySaleIdQuery),
+            {
+                "id_sucursal": id_sucursal,
+                "id_venta": id_venta,
+            },
+        ).mappings().all()
+
+    return [dict(row) for row in rows]
+
+
+def getTotalIncomeKpi(id_sucursal):
+    with engine.connect() as conn:
+        row = conn.execute(
+            text(getTotalIncomeKpiQuery),
+            {"id_sucursal": id_sucursal},
+        ).mappings().first()
+
+    return dict(row) if row else {}

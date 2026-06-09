@@ -4,10 +4,21 @@ import MetricsDashboard from '@/components/dashboard/MetricsDashboard';
 import PredictionsView from '@/components/dashboard/PredictionsView';
 import DataView from '@/components/dashboard/DataView';
 import { useStoreState } from '@/hooks/useStoreState';
+import { useEffect } from 'react';
 
 export default function Index() {
   const state = useStoreState();
   const selectedStore = state.allStores.find(s => s.id === state.selectedStoreId);
+
+  useEffect(() => {
+    const viewLabel = state.viewMode === 'metrics'
+      ? 'Métricas'
+      : state.viewMode === 'predictions'
+        ? 'Predicciones'
+        : 'Datos';
+    const storeName = selectedStore?.name || 'Sin comercio';
+    document.title = `Vision | ${storeName} | ${viewLabel}`;
+  }, [selectedStore?.name, state.viewMode]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden">
