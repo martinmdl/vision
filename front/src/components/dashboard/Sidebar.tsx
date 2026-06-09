@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon, Edit } from 'lucide-react';
+import { Search, Plus, Upload, Trash2, Info, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Store } from '@/types/store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -46,8 +46,8 @@ export default function Sidebar({
         {/* Header */}
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2.5 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-sidebar-accent flex items-center justify-center">
-              <StoreIcon className="w-5 h-5 text-primary-foreground" />
+            <div className="w-9 h-9 rounded-lg bg-white/10 border border-sidebar-border flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Vision logo" className="w-6 h-6 object-contain" />
             </div>
             <h1 className="text-base font-semibold text-sidebar-fg-bright tracking-tight">Vision</h1>
           </div>

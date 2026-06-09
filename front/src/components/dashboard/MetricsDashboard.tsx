@@ -14,12 +14,14 @@ import MetricCard from './MetricCard';
 import AddMetricModal from './AddMetricModal';
 import {
   getAllMetrics,
+  getTotalIncomeKpi,
   type TopSoldProductItem,
   type TopProfitableProductItem,
   type WeatherImpactIncomeItem,
   type CalendarImpactIncomeItem,
   type CalendarUpliftItem,
   type CategoryProfitabilityItem,
+  type TotalIncomeKpiItem,
 } from '@/api/services/mvp.ts';
 import {
   TopProductsChart,
@@ -119,6 +121,47 @@ function UpliftKpiCard({
   );
 }
 
+function TotalIncomeKpiCard({
+  value,
+  salesDays,
+  avgDaily,
+  isLoading,
+  error,
+}: {
+  value: number;
+  salesDays: number;
+  avgDaily: number;
+  isLoading: boolean;
+  error: string;
+}) {
+  if (error) return null;
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-border shadow-card p-5 bg-card">
+        <h3 className="text-sm font-semibold text-card-foreground mb-2">Ingreso total registrado</h3>
+        <p className="text-xs text-muted-foreground">Calculando metrica...</p>
+      </div>
+    );
+  }
+
+  const formatCurrency = (amount: number) => amount.toLocaleString('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  });
+
+  return (
+    <div className="rounded-xl border border-border shadow-card hover:shadow-card-hover transition-shadow p-5 bg-card">
+      <h3 className="text-sm font-semibold text-card-foreground mb-2">Ingreso total registrado</h3>
+      <p className="text-3xl font-bold text-card-foreground">{formatCurrency(value)}</p>
+      <p className="text-xs text-muted-foreground mt-2">
+        {salesDays} dias con ventas · promedio diario {formatCurrency(avgDaily)}
+      </p>
+    </div>
+  );
+}
+
 function SortableMetric({
   metric,
   onRemove,
@@ -196,6 +239,15 @@ export default function MetricsDashboard({
   const [isLoadingCalendarUplift, setIsLoadingCalendarUplift] = useState(false);
   const [calendarUpliftError, setCalendarUpliftError] = useState('');
 
+  const [totalIncomeKpi, setTotalIncomeKpi] = useState<TotalIncomeKpiItem>({
+    total_income: 0,
+    total_sales: 0,
+    sales_days: 0,
+    avg_daily_income: 0,
+  });
+  const [isLoadingTotalIncomeKpi, setIsLoadingTotalIncomeKpi] = useState(false);
+  const [totalIncomeKpiError, setTotalIncomeKpiError] = useState('');
+
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   useEffect(() => {
@@ -263,6 +315,30 @@ export default function MetricsDashboard({
       setIsLoadingCalendarUplift(false);
     };
 
+     const loadTotalIncomeKpi = async () => {
+      setIsLoadingTotalIncomeKpi(true);
+      setTotalIncomeKpiError('');
+
+      const response = await getTotalIncomeKpi(selectedStoreId);
+      if (!mounted) return;
+
+      if (response.status_code === 200 && response.data) {
+        setTotalIncomeKpi(response.data);
+      } else {
+        setTotalIncomeKpi({
+          total_income: 0,
+          total_sales: 0,
+          sales_days: 0,
+          avg_daily_income: 0,
+        });
+        setTotalIncomeKpiError(response.message || 'No se pudo obtener la metrica.');
+      }
+
+      setIsLoadingTotalIncomeKpi(false);
+    };
+
+    loadTotalIncomeKpi();
+
     loadAllMetrics();
 
     return () => {
@@ -275,7 +351,8 @@ export default function MetricsDashboard({
       topProfitableProducts.length > 0 ||
       weatherImpactIncome.length > 0 ||
       calendarImpactIncome.length > 0 ||
-      categoryProfitability.length > 0;
+      categoryProfitability.length > 0 ||
+      totalIncomeKpi.total_sales > 0;
         const onRemoveMetric = (id: string) => {
       setMetricIds(prev => prev.filter(metricId => metricId !== id));
     };
@@ -464,7 +541,7 @@ export default function MetricsDashboard({
     <>
     {hasUploadedData ? (
       <div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
         <UpliftKpiCard
           title="Incremento por feriado"
           titleInfo="Tasa de aumento porcentual de ganancia en días festivos respecto a días normales."
@@ -479,6 +556,14 @@ export default function MetricsDashboard({
           value={calendarUplift.weekend_uplift}
           isLoading={isLoadingCalendarUplift}
           error={calendarUpliftError}
+        />
+
+        <TotalIncomeKpiCard
+          value={totalIncomeKpi.total_income}
+          salesDays={totalIncomeKpi.sales_days}
+          avgDaily={totalIncomeKpi.avg_daily_income}
+          isLoading={isLoadingTotalIncomeKpi}
+          error={totalIncomeKpiError}
         />
       </div>
       

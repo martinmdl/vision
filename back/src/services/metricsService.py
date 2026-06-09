@@ -5,6 +5,11 @@ from ..db.managementDB import (
     getCalendarImpactIncome,
     getCalendarUplift,
     getCategoryProfitability,
+    getProcessedDataSummary,
+    getProcessedProductsCatalog,
+    getProcessedSalesByDateRange,
+    getSaleDetailBySaleId,
+    getTotalIncomeKpi,
 )
 from datetime import date, timedelta
 from typing import Optional
@@ -125,3 +130,109 @@ async def get_category_profitability(id_sucursal, start_date: Optional[str] = No
         })
 
     return profitability
+
+
+async def get_processed_data_summary(id_sucursal):
+    payload = getProcessedDataSummary(id_sucursal)
+
+    summary = payload.get("summary", {})
+    categories = payload.get("categories", [])
+    recent_sales = payload.get("recent_sales", [])
+
+    first_sale_date = summary.get("first_sale_date")
+    last_sale_date = summary.get("last_sale_date")
+
+    overview = {
+        "sales_rows": int(summary.get("sales_rows") or 0),
+        "products_rows": int(summary.get("products_rows") or 0),
+        "sale_detail_rows": int(summary.get("sale_detail_rows") or 0),
+        "sales_days": int(summary.get("sales_days") or 0),
+        "total_income": float(summary.get("total_income") or 0),
+        "first_sale_date": first_sale_date.isoformat() if first_sale_date else None,
+        "last_sale_date": last_sale_date.isoformat() if last_sale_date else None,
+    }
+
+    pipeline = [
+        {"source_sheet": "Ventas", "target_table": "ventas", "rows": overview["sales_rows"]},
+        {"source_sheet": "Productos", "target_table": "productos", "rows": overview["products_rows"]},
+        {"source_sheet": "Adiciones", "target_table": "detalle_ventas", "rows": overview["sale_detail_rows"]},
+    ]
+
+    top_categories = [
+        {
+            "name": row.get("category"),
+            "products_count": int(row.get("products_count") or 0),
+        }
+        for row in categories
+    ]
+
+    sales_sample = [
+        {
+            "id_venta": int(row.get("id_venta") or 0),
+            "sale_date": row.get("sale_date").isoformat() if row.get("sale_date") else None,
+            "total": float(row.get("total") or 0),
+            "sale_type": row.get("sale_type") or "-",
+        }
+        for row in recent_sales
+    ]
+
+    return {
+        "overview": overview,
+        "pipeline": pipeline,
+        "top_categories": top_categories,
+        "sales_sample": sales_sample,
+    }
+
+
+async def get_processed_products_catalog(id_sucursal):
+    rows = getProcessedProductsCatalog(id_sucursal)
+    return [
+        {
+            "id_producto": int(row.get("id_producto") or 0),
+            "product_name": row.get("product_name") or "-",
+            "category": row.get("category") or "Sin categoria",
+        }
+        for row in rows
+    ]
+
+
+async def get_processed_sales_table(id_sucursal, start_date=None, end_date=None):
+    rows = getProcessedSalesByDateRange(id_sucursal, start_date=start_date, end_date=end_date, limit=180)
+    return [
+        {
+            "id_venta": int(row.get("id_venta") or 0),
+            "sale_date": row.get("sale_date").isoformat() if row.get("sale_date") else None,
+            "total": float(row.get("total") or 0),
+            "sale_type": row.get("sale_type") or "-",
+        }
+        for row in rows
+    ]
+
+
+async def get_sale_detail(id_sucursal, id_venta):
+    rows = getSaleDetailBySaleId(id_sucursal, id_venta)
+    return [
+        {
+            "id_detalle": int(row.get("id_detalle") or 0),
+            "id_producto": int(row.get("id_producto") or 0),
+            "product_name": row.get("product_name") or "-",
+            "category": row.get("category") or "Sin categoria",
+            "quantity": int(row.get("quantity") or 0),
+            "unit_price": float(row.get("unit_price") or 0),
+            "unit_cost": float(row.get("unit_cost") or 0),
+            "cancelled": bool(row.get("cancelled") or False),
+            "subtotal": float(row.get("subtotal") or 0),
+            "profit": float(row.get("profit") or 0),
+        }
+        for row in rows
+    ]
+
+
+async def get_total_income_kpi(id_sucursal):
+    row = getTotalIncomeKpi(id_sucursal)
+    return {
+        "total_income": float(row.get("total_income") or 0),
+        "total_sales": int(row.get("total_sales") or 0),
+        "sales_days": int(row.get("sales_days") or 0),
+        "avg_daily_income": float(row.get("avg_daily_income") or 0),
+    }

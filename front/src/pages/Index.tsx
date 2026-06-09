@@ -2,7 +2,9 @@ import Sidebar from '@/components/dashboard/Sidebar';
 import TopBar from '@/components/dashboard/TopBar';
 import MetricsDashboard from '@/components/dashboard/MetricsDashboard';
 import PredictionsView from '@/components/dashboard/PredictionsView';
+import DataView from '@/components/dashboard/DataView';
 import { useStoreState } from '@/hooks/useStoreState';
+import { useEffect } from 'react';
 
 export default function Index() {
   const state = useStoreState();
@@ -22,6 +24,17 @@ export default function Index() {
   }
 
   const { startDate, endDate } = computeRange(state.dateRange);
+
+  useEffect(() => {
+      const viewLabel = state.viewMode === 'metrics'
+        ? 'Métricas'
+        : state.viewMode === 'predictions'
+          ? 'Predicciones'
+          : 'Datos';
+      const storeName = selectedStore?.name || 'Sin comercio';
+      document.title = `Vision | ${storeName} | ${viewLabel}`;
+    }, [selectedStore?.name, state.viewMode]);
+
   return (
     <div className="flex h-screen w-full overflow-hidden">
       <Sidebar
@@ -50,8 +63,10 @@ export default function Index() {
             startDate={startDate}
             endDate={endDate}
           />
-        ) : (
+        ) : state.viewMode === 'predictions' ? (
           <PredictionsView selectedStoreId={state.selectedStoreId} />
+        ) : (
+          <DataView selectedStoreId={state.selectedStoreId} />
         )}
       </main>
     </div>
