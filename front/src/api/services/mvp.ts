@@ -190,165 +190,59 @@ export async function predict(idSucursal: number): Promise<PredictResponse> {
   }
 }
 
-export async function getTopSoldProducts(idSucursal: number, limit = 10): Promise<TopSoldProductsResponse> {
+export interface BatchMetricItem {
+  status_code: number;
+  message?: string;
+  data?: any;
+}
+
+export interface FetchMetricsResponse {
+  status_code: number;
+  message: string;
+  data?: Record<string, BatchMetricItem>;
+}
+
+const _pendingFetches: Record<string, Promise<FetchMetricsResponse> | undefined> = {};
+
+export async function getAllMetrics(idSucursal: number, limit?: number, startDate?: string, endDate?: string): Promise<FetchMetricsResponse> {
+  const key = `${idSucursal}:${limit ?? ''}:${startDate ?? ''}:${endDate ?? ''}`;
+  if (_pendingFetches[key]) return _pendingFetches[key]!;
+
+  const p = fetchMetrics(idSucursal, undefined, limit, startDate, endDate);
+  _pendingFetches[key] = p;
+
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/top-sold?id_sucursal=${idSucursal}&limit=${limit}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const payload = await response.json();
-
-    if (typeof payload?.status_code === 'number') {
-      return payload as TopSoldProductsResponse;
-    }
-
-    return {
-      status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'Top productos obtenido' : 'Error al obtener top productos',
-      data: Array.isArray(payload?.data) ? payload.data : undefined,
-    };
-  } catch {
-    return {
-      status_code: 500,
-      message: 'No se pudo conectar con el backend.',
-    };
+    const res = await p;
+    return res;
+  } finally {
+    delete _pendingFetches[key];
   }
 }
 
-export async function getTopProfitableProducts(idSucursal: number, limit = 10): Promise<TopProfitableProductsResponse> {
+export async function fetchMetrics(idSucursal: number, metrics?: string[], limit?: number, startDate?: string, endDate?: string): Promise<FetchMetricsResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/metrics/top-profitable?id_sucursal=${idSucursal}&limit=${limit}`, {
+    const params = new URLSearchParams();
+    params.append('id_sucursal', String(idSucursal));
+    if (metrics && metrics.length) metrics.forEach(m => params.append('metrics', m));
+    if (typeof limit === 'number') params.append('limit', String(limit));
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const response = await fetch(`${API_BASE_URL}/metrics?${params.toString()}`, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
     });
 
     const payload = await response.json();
 
     if (typeof payload?.status_code === 'number') {
-      return payload as TopProfitableProductsResponse;
+      return payload as FetchMetricsResponse;
     }
 
     return {
       status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'Top productos rentables obtenido' : 'Error al obtener top productos rentables',
-      data: Array.isArray(payload?.data) ? payload.data : undefined,
-    };
-  } catch {
-    return {
-      status_code: 500,
-      message: 'No se pudo conectar con el backend.',
-    };
-  }
-}
-
-export async function getWeatherImpactIncome(idSucursal: number): Promise<WeatherImpactIncomeResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/metrics/weather-impact-income?id_sucursal=${idSucursal}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const payload = await response.json();
-
-    if (typeof payload?.status_code === 'number') {
-      return payload as WeatherImpactIncomeResponse;
-    }
-
-    return {
-      status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'Impacto de clima adverso obtenido' : 'Error al obtener impacto de clima adverso',
-      data: Array.isArray(payload?.data) ? payload.data : undefined,
-    };
-  } catch {
-    return {
-      status_code: 500,
-      message: 'No se pudo conectar con el backend.',
-    };
-  }
-}
-
-export async function getCalendarImpactIncome(idSucursal: number): Promise<CalendarImpactIncomeResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/metrics/calendar-impact-income?id_sucursal=${idSucursal}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const payload = await response.json();
-
-    if (typeof payload?.status_code === 'number') {
-      return payload as CalendarImpactIncomeResponse;
-    }
-
-    return {
-      status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'Comparativa de tipos de dia obtenida' : 'Error al obtener comparativa de tipos de dia',
-      data: Array.isArray(payload?.data) ? payload.data : undefined,
-    };
-  } catch {
-    return {
-      status_code: 500,
-      message: 'No se pudo conectar con el backend.',
-    };
-  }
-}
-
-export async function getCalendarUplift(idSucursal: number): Promise<CalendarUpliftResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/metrics/calendar-uplift?id_sucursal=${idSucursal}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const payload = await response.json();
-
-    if (typeof payload?.status_code === 'number') {
-      return payload as CalendarUpliftResponse;
-    }
-
-    return {
-      status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'Incrementos por tipo de dia obtenidos' : 'Error al obtener incrementos por tipo de dia',
+      message: response.ok ? 'Metrics fetched' : 'Error fetching metrics',
       data: payload?.data,
-    };
-  } catch {
-    return {
-      status_code: 500,
-      message: 'No se pudo conectar con el backend.',
-    };
-  }
-}
-
-export async function getCategoryProfitability(idSucursal: number): Promise<CategoryProfitabilityResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/metrics/category-profitability?id_sucursal=${idSucursal}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const payload = await response.json();
-
-    if (typeof payload?.status_code === 'number') {
-      return payload as CategoryProfitabilityResponse;
-    }
-
-    return {
-      status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'Rentabilidad por categoria obtenida' : 'Error al obtener rentabilidad por categoria',
-      data: Array.isArray(payload?.data) ? payload.data : undefined,
     };
   } catch {
     return {
