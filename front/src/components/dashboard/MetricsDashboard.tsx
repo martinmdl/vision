@@ -14,7 +14,6 @@ import MetricCard from './MetricCard';
 import AddMetricModal from './AddMetricModal';
 import {
   getAllMetrics,
-  getTotalIncomeKpi,
   type TopSoldProductItem,
   type TopProfitableProductItem,
   type WeatherImpactIncomeItem,
@@ -261,6 +260,7 @@ export default function MetricsDashboard({
       setIsLoadingCalendarImpactIncome(true);
       setIsLoadingCategoryProfitability(true);
       setIsLoadingCalendarUplift(true);
+        setIsLoadingTotalIncomeKpi(true);
 
       setTopProductsError('');
       setTopProfitableProductsError('');
@@ -268,6 +268,7 @@ export default function MetricsDashboard({
       setCalendarImpactIncomeError('');
       setCategoryProfitabilityError('');
       setCalendarUpliftError('');
+      setTotalIncomeKpiError('');
 
       // fetch all metrics with a single call (idSucursal + explicit date window)
       const resp = await getAllMetrics(selectedStoreId, 10, startDate, endDate);
@@ -297,6 +298,10 @@ export default function MetricsDashboard({
         const u = resp.data.calendar_uplift;
         if (u && u.status_code === 200 && u.data) setCalendarUplift(u.data as CalendarUpliftItem);
         else { setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 }); setCalendarUpliftError(u?.message || 'No se pudo obtener la metrica.'); }
+
+        const tik = resp.data.total_income_kpi || resp.data.total_income || resp.data.totalIncomeKpi;
+        if (tik && tik.status_code === 200 && t.data) setTotalIncomeKpi(tik.data as TotalIncomeKpiItem);
+        else { setTotalIncomeKpi({ total_income: 0, total_sales: 0, sales_days: 0, avg_daily_income: 0 }); setTotalIncomeKpiError(tik?.message || 'No se pudo obtener la metrica.'); }
       } else {
         const msg = resp.message || 'Error al obtener métricas';
         setTopProducts([]); setTopProductsError(msg);
@@ -305,6 +310,7 @@ export default function MetricsDashboard({
         setCalendarImpactIncome([]); setCalendarImpactIncomeError(msg);
         setCategoryProfitability([]); setCategoryProfitabilityError(msg);
         setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 }); setCalendarUpliftError(msg);
+        setTotalIncomeKpi({ total_income: 0, total_sales: 0, sales_days: 0, avg_daily_income: 0 }); setTotalIncomeKpiError(msg);
       }
 
       setIsLoadingTopProducts(false);
@@ -313,32 +319,8 @@ export default function MetricsDashboard({
       setIsLoadingCalendarImpactIncome(false);
       setIsLoadingCategoryProfitability(false);
       setIsLoadingCalendarUplift(false);
-    };
-
-     const loadTotalIncomeKpi = async () => {
-      setIsLoadingTotalIncomeKpi(true);
-      setTotalIncomeKpiError('');
-
-      const response = await getTotalIncomeKpi(selectedStoreId);
-      if (!mounted) return;
-
-      if (response.status_code === 200 && response.data) {
-        setTotalIncomeKpi(response.data);
-      } else {
-        setTotalIncomeKpi({
-          total_income: 0,
-          total_sales: 0,
-          sales_days: 0,
-          avg_daily_income: 0,
-        });
-        setTotalIncomeKpiError(response.message || 'No se pudo obtener la metrica.');
-      }
-
       setIsLoadingTotalIncomeKpi(false);
     };
-
-    loadTotalIncomeKpi();
-
     loadAllMetrics();
 
     return () => {

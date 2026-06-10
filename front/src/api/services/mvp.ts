@@ -493,31 +493,3 @@ export async function getSaleDetail(idSucursal: number, idVenta: number): Promis
     };
   }
 }
-
-export async function getTotalIncomeKpi(idSucursal: number): Promise<TotalIncomeKpiResponse> {
-  try {
-    const response = await fetch(`${API_BASE_URL}/metrics/total-income?id_sucursal=${idSucursal}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    const payload = await response.json();
-
-    if (typeof payload?.status_code === 'number') {
-      return payload as TotalIncomeKpiResponse;
-    }
-
-    return {
-      status_code: response.ok ? 200 : response.status,
-      message: response.ok ? 'KPI de ingreso total obtenido' : 'Error al obtener KPI de ingreso total',
-      data: payload?.data,
-    };
-  } catch {
-    return {
-      status_code: 500,
-      message: 'No se pudo conectar con el backend.',
-    };
-  }
-}
