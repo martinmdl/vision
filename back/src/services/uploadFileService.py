@@ -17,9 +17,9 @@ async def uploadFileService(file, id_sucursal: int):
     print(f"  ventas: {len(df_venta)} filas")
     print(f"  productos: {len(df_producto)} filas")
     print(f"  detalles: {len(df_detalle_venta)} filas")
-    save_to_postgres(df_venta, "ventas", "id_venta")
-    save_to_postgres(df_producto, "productos", "id_producto")
-    save_to_postgres(df_detalle_venta, "detalle_ventas", "id_detalle")
+    save_to_postgres(df_venta, "ventas")
+    save_to_postgres(df_producto, "productos")
+    save_to_postgres(df_detalle_venta, "detalle_ventas")
     print(f"[1] clean + save BD: {time.time() - t0:.2f}s")
     
     t1 = time.time()
@@ -34,9 +34,9 @@ async def uploadFileService(file, id_sucursal: int):
     print(f"[2] APIs clima + feriados (paralelo): {time.time() - t1:.2f}s")
 
     t2 = time.time()
-    save_to_postgres(df_clima, "clima", "fecha")
-    save_to_postgres(df_catalog, "tipo_feriado", "id_tipo_feriado") 
-    save_to_postgres(df_feriado, "feriado", "id_feriado")
+    save_to_postgres(df_clima, "clima")
+    save_to_postgres(df_catalog, "tipo_feriado") 
+    save_to_postgres(df_feriado, "feriado")
     print(f"[3] save clima/feriados: {time.time() - t2:.2f}s")
 
     # machine learning PKL

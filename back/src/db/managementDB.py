@@ -1,5 +1,5 @@
 import pandas as pd
-from sqlalchemy import Date, DateTime, Table, MetaData, Column, Integer, String, Float, Boolean, ForeignKey, text, Date
+from sqlalchemy import Date, DateTime, Table, MetaData, Column, Integer, String, Float, Boolean, ForeignKey, text, Date, ForeignKeyConstraint
 from sqlalchemy.dialects.postgresql import insert
 from src.db.engine import engine
 from enum import Enum
@@ -45,7 +45,7 @@ sucursal = Table(
 ventas = Table(
     "ventas", metadata,
     Column("id_venta", Integer, primary_key=True),
-    Column("id_sucursal", Integer, ForeignKey("sucursal.id_sucursal")),
+    Column("id_sucursal", Integer, ForeignKey("sucursal.id_sucursal"), primary_key=True),
     Column("total", Float),
     Column("tipo", String),
     Column("creacion", Date), 
@@ -56,7 +56,7 @@ ventas = Table(
 productos = Table(
     "productos", metadata,
     Column("id_producto", Integer, primary_key=True),
-    Column("id_sucursal", Integer, ForeignKey("sucursal.id_sucursal")),
+    Column("id_sucursal", Integer, ForeignKey("sucursal.id_sucursal"), primary_key=True),
     Column("nombre", String),
     Column("categoria", String),
     Column("cantidad", Integer),
@@ -69,15 +69,24 @@ productos = Table(
 detalle_ventas = Table(
     "detalle_ventas", metadata,
     Column("id_detalle", Integer, primary_key=True),
-    Column("id_venta", Integer, ForeignKey("ventas.id_venta")),
-    Column("id_producto", Integer, ForeignKey("productos.id_producto")),
+    Column("id_sucursal", Integer),
+    Column("id_venta", Integer, primary_key=True),
+    Column("id_producto", Integer),
     Column("cantidad", Integer),
     Column("precio", Float),
     Column("costo", Float),
     Column("cancelada", Boolean),
     Column("creacion", Date),
     Column("actualizacion", Date),
-    Column("activo", Boolean)
+    Column("activo", Boolean),
+    ForeignKeyConstraint(
+        ["id_venta", "id_sucursal"],
+        ["ventas.id_venta", "ventas.id_sucursal"]
+    ),
+    ForeignKeyConstraint(
+        ["id_producto", "id_sucursal"],
+        ["productos.id_producto", "productos.id_sucursal"]
+    ),
 )
 
 clima = Table(
@@ -135,36 +144,34 @@ class TableEnum(Enum):
 # Crear tablas si no existen
 
 def init_db():
+    print("Inicializando base de datos...")
     metadata.create_all(engine)
 
-def save_to_postgres(df_table, table_name, id_table):
+def save_to_postgres(df_table, table_name):
     table = TableEnum.get_table(table_name)
-    upsert_dataframe(df_table, table, id_table)
+    upsert_dataframe(df_table, table)
 
-def upsert_dataframe(df, table, pk_column, chunk_size=1000):
+def upsert_dataframe(df, table, chunk_size=1000):
     if df.empty:
         return
-    
+
+    pk_columns = [c.name for c in table.primary_key.columns]
+
     with engine.begin() as conn:
-        # Traer PKs que ya existen en la BD
-        existing = pd.read_sql(
-            f"SELECT {pk_column} FROM {table.name}", conn
-        )
-        existing_ids = set(existing[pk_column].astype(str))
-        
-        # Filtrar solo filas nuevas
-        df_new = df[~df[pk_column].astype(str).isin(existing_ids)]
-        
-        if df_new.empty:
-            print(f"  {table.name}: sin filas nuevas, skip")
-            return
-        
-        print(f"  {table.name}: insertando {len(df_new)} filas nuevas de {len(df)}")
-        
-        for i in range(0, len(df_new), chunk_size):
-            chunk = df_new.iloc[i:i + chunk_size]
-            stmt = insert(table).values(chunk.to_dict(orient="records"))
-            stmt = stmt.on_conflict_do_nothing(index_elements=[pk_column])
+
+        print(f"  {table.name}: insertando {len(df)} filas")
+
+        for i in range(0, len(df), chunk_size):
+            chunk = df.iloc[i:i + chunk_size]
+
+            stmt = insert(table).values(
+                chunk.to_dict(orient="records")
+            )
+
+            stmt = stmt.on_conflict_do_nothing(
+                index_elements=pk_columns
+            )
+
             conn.execute(stmt)
 
 def getDBLastYear():
