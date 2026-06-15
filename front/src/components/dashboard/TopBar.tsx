@@ -1,8 +1,11 @@
 import { Calendar, BarChart3, TrendingUp, Database } from 'lucide-react';
+import { useState } from 'react';
 import type { DateRange, ViewMode } from '@/types/store';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import DateRangePickerModal from './DateRangePickerModal';
+import { Button } from '../ui/button';
 
 interface TopBarProps {
   dateRange: DateRange;
@@ -10,6 +13,9 @@ interface TopBarProps {
   viewMode: ViewMode;
   onViewChange: (mode: ViewMode) => void;
   storeName: string;
+  customDateStart?: string;
+  customDateEnd?: string;
+  onCustomDateChange?: (startDate: string, endDate: string) => void;
 }
 
 export default function TopBar({
@@ -18,7 +24,24 @@ export default function TopBar({
   viewMode,
   onViewChange,
   storeName,
+  customDateStart,
+  customDateEnd,
+  onCustomDateChange,
 }: TopBarProps) {
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
+
+  const handleDateRangeSelect = (value: string) => {
+    console.log(isDateModalOpen)
+    if (value !== 'custom') {
+      onDateRangeChange(value as DateRange); 
+    }
+  };
+
+  const handleCustomDateConfirm = (startDate: string, endDate: string) => {
+    onCustomDateChange?.(startDate, endDate);
+    onDateRangeChange('custom');
+  };
+
   const viewLabel = viewMode === 'metrics'
     ? 'Métricas'
     : viewMode === 'predictions'
@@ -65,7 +88,7 @@ export default function TopBar({
 
         <div className="flex items-center gap-1.5">
           <Calendar className="w-4 h-4 text-muted-foreground" />
-          <Select value={dateRange} onValueChange={v => onDateRangeChange(v as DateRange)}>
+          <Select value={dateRange} onValueChange={handleDateRangeSelect}>
             <SelectTrigger className="w-32 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
@@ -73,10 +96,19 @@ export default function TopBar({
               <SelectItem value="7d">Ultimos 7 dias</SelectItem>
               <SelectItem value="30d">Ultimos 30 dias</SelectItem>
               <SelectItem value="90d">Ultimos 90 dias</SelectItem>
-              <SelectItem value="custom">Rango personalizado</SelectItem>
             </SelectContent>
           </Select>
+          
+          <Button value="custom" onClick={() => setIsDateModalOpen(true)}>Rango personalizado</Button>
         </div>
+
+        <DateRangePickerModal
+          open={isDateModalOpen}
+          onOpenChange={setIsDateModalOpen}
+          onConfirm={handleCustomDateConfirm}
+          initialStartDate={customDateStart}
+          initialEndDate={customDateEnd}
+        />
       </div>
     </div>
   );

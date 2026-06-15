@@ -17,6 +17,12 @@ export default function Index() {
     if (range === '7d') start = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     else if (range === '30d') start = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     else if (range === '90d') start = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000);
+    else if (range === 'custom') {
+      return {
+        startDate: state.customDateStart,
+        endDate: state.customDateEnd,
+      };
+    }
     else return { startDate: undefined, endDate: undefined };
 
     const startDate = start.toISOString().slice(0, 10);
@@ -55,6 +61,12 @@ export default function Index() {
           viewMode={state.viewMode}
           onViewChange={state.setViewMode}
           storeName={selectedStore?.name || 'Selecciona una tienda'}
+          customDateStart={state.customDateStart}
+          customDateEnd={state.customDateEnd}
+          onCustomDateChange={(start, end) => {
+            state.setCustomDateStart(start);
+            state.setCustomDateEnd(end);
+          }}
         />
 
         {state.viewMode === 'metrics' ? (
