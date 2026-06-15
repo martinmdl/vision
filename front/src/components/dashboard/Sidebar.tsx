@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search, Plus, Upload, Trash2, Info, Store as StoreIcon, Edit } from 'lucide-react';
+import { Search, Plus, Upload, Trash2, Info, Edit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { Store } from '@/types/store';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -23,9 +23,11 @@ export default function Sidebar({
   onSelectStore, onAddStore, onDeleteStore, onEditStore,
 }: SidebarProps) {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+  const [editTarget, setEditTarget] = useState<{ id: number; name: string } | null>(null);
   const [newStoreName, setNewStoreName] = useState('');
 
   const handleAdd = () => {
@@ -40,14 +42,29 @@ export default function Sidebar({
     setShowUploadModal(true);
   };
 
+  const handleOpenEditModal = (store: Store) => {
+    setEditTarget({ id: store.id, name: store.name });
+    setShowEditModal(true);
+  };
+
+  const handleEdit = () => {
+    if (!editTarget || !editTarget.name.trim()) {
+      return;
+    }
+
+    onEditStore(editTarget.id, editTarget.name.trim());
+    setEditTarget(null);
+    setShowEditModal(false);
+  }
+
   return (
     <>
       <aside className="w-96 h-screen bg-sidebar-bg flex flex-col border-r border-sidebar-border shrink-0 overflow-hidden">
         {/* Header */}
         <div className="p-6 pb-4">
           <div className="flex items-center gap-2.5 mb-6">
-            <div className="w-9 h-9 rounded-lg bg-sidebar-accent flex items-center justify-center">
-              <StoreIcon className="w-5 h-5 text-primary-foreground" />
+            <div className="w-9 h-9 rounded-lg bg-white/10 border border-sidebar-border flex items-center justify-center overflow-hidden">
+              <img src="/logo.png" alt="Vision logo" className="w-6 h-6 object-contain" />
             </div>
             <h1 className="text-base font-semibold text-sidebar-fg-bright tracking-tight">Vision</h1>
           </div>
@@ -95,7 +112,7 @@ export default function Sidebar({
                     <button
                       className="p-1.5 rounded hover:bg-sidebar-fg/10"
                       title="Editar nombre"
-                      onClick={e => { e.stopPropagation(); const newName = window.prompt('Nuevo nombre de la sucursal', store.name); if (newName && onEditStore) onEditStore(store.id, newName); }}
+                      onClick={e => { e.stopPropagation(); handleOpenEditModal(store); }}
                       type="button"
                     >
                       <Edit className="w-4 h-4" />
@@ -147,6 +164,34 @@ export default function Sidebar({
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddModal(false)}>Cancelar</Button>
             <Button onClick={handleAdd}>Agregar tienda</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Store Modal */}
+      <Dialog
+        open={showEditModal}
+        onOpenChange={nextOpen => {
+          setShowEditModal(nextOpen);
+          if (!nextOpen) {
+            setEditTarget(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar nombre de tienda</DialogTitle>
+            <DialogDescription>Actualiza el nombre visible de la sucursal.</DialogDescription>
+          </DialogHeader>
+          <Input
+            value={editTarget?.name ?? ''}
+            onChange={e => setEditTarget(current => current ? { ...current, name: e.target.value } : current)}
+            placeholder="Nombre de la tienda"
+            onKeyDown={e => e.key === 'Enter' && handleEdit()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+            <Button onClick={handleEdit} disabled={!editTarget?.name.trim()}>Guardar cambios</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

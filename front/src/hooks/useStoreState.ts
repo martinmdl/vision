@@ -31,21 +31,7 @@ const CANDLE_DATA = [
 
 const INITIAL_STORES: Store[] = [];
 
-const INITIAL_METRICS: Metric[] = [
-  { id: 'm1', title: 'Ingresos Totales', category: 'finance', value: '$48,290', change: 12.5, chartType: 'area', data: SAMPLE_DATA },
-  { id: 'm2', title: 'Unidades Vendidas', category: 'product', value: '3,847', change: -2.3, chartType: 'bar', data: SAMPLE_DATA },
-  { id: 'm3', title: 'Margen Bruto', category: 'finance', value: '34.2%', change: 1.8, chartType: 'line', data: SAMPLE_DATA },
-  { id: 'm4', title: 'Ticket Promedio', category: 'customer', value: '$27.40', change: 5.1, chartType: 'area', data: SAMPLE_DATA },
-  { id: 'm5', title: 'Ventas por Categoria', category: 'product', value: '$11.5K', change: 4.2, chartType: 'pie', data: PIE_DATA },
-  { id: 'm6', title: 'Mix por Canal', category: 'finance', value: '62%', change: 2.1, chartType: 'donut', data: PIE_DATA },
-  { id: 'm7', title: 'Top Productos', category: 'product', value: '128', change: 8.4, chartType: 'hbar', data: PIE_DATA },
-  { id: 'm8', title: 'Rango Diario de Precio', category: 'finance', value: '$612', change: 3.7, chartType: 'candle', data: CANDLE_DATA },
-  { id: 'm9', title: 'Puntaje de Desempeno', category: 'operations', value: '87', change: 6.5, chartType: 'radial', data: [{ name: 'puntaje', value: 87 }] },
-  { id: 'm10', title: 'Perfil de Cliente', category: 'customer', value: '4.6/5', change: 1.2, chartType: 'radar', data: [
-    { name: 'Lealtad', value: 80 }, { name: 'Gasto', value: 65 }, { name: 'Visitas', value: 90 },
-    { name: 'Resenas', value: 70 }, { name: 'Referidos', value: 55 },
-  ]},
-];
+const INITIAL_METRICS: Metric[] = [];
 
 const SELECTED_STORE_KEY = 'selectedStoreId';
 
@@ -59,6 +45,8 @@ export function useStoreState() {
   const [viewMode, setViewMode] = useState<ViewMode>('metrics');
   const [gridColumns, setGridColumns] = useState<GridColumns>(2);
   const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const [customDateStart, setCustomDateStart] = useState<string | undefined>();
+  const [customDateEnd, setCustomDateEnd] = useState<string | undefined>();
   const [metrics, setMetrics] = useState<Metric[]>(INITIAL_METRICS);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -121,8 +109,7 @@ export function useStoreState() {
       category,
       value: '—',
       change: 0,
-      chartType: 'line',
-      data: SAMPLE_DATA,
+      titleInfo: ''
     };
     setMetrics(prev => [...prev, newMetric]);
   }, []);
@@ -167,6 +154,10 @@ export function useStoreState() {
     setGridColumns,
     dateRange,
     setDateRange,
+    customDateStart,
+    setCustomDateStart,
+    customDateEnd,
+    setCustomDateEnd,
     metrics,
     searchQuery,
     setSearchQuery,

@@ -26,6 +26,26 @@ export default function UploadDataModal({ open, onOpenChange, storeId }: UploadD
   const [uploadStage, setUploadStage] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const getFriendlyUploadStage = (progress: number) => {
+    if (progress < 12) return 'Scanning file metadata';
+    if (progress < 30) return 'Uploading workbook';
+    if (progress < 48) return 'Validating sheets structure';
+    if (progress < 66) return 'Extracting rows from Excel';
+    if (progress < 84) return 'Transforming and cleaning data';
+    if (progress < 96) return 'Saving into Postgres';
+    return 'Finalizing and training model';
+  };
+
+  const smoothProgressTo = (target: number) => {
+    setUploadProgress((current) => {
+      const clampedTarget = Math.max(0, Math.min(100, target));
+      if (clampedTarget <= current) return current;
+      const delta = clampedTarget - current;
+      const step = delta > 18 ? 6 : delta > 8 ? 3 : 1;
+      return Math.min(clampedTarget, current + step);
+    });
+  };
+
   const resetState = () => {
     setSelectedFile(null);
     setUploadProgress(0);
@@ -69,27 +89,49 @@ export default function UploadDataModal({ open, onOpenChange, storeId }: UploadD
 
     setIsUploading(true);
     setUploadProgress(0);
-    setUploadStage('Iniciando carga');
+    setUploadStage('Preparing upload');
+
+    const smoothTicker = window.setInterval(() => {
+      setUploadProgress((current) => {
+        const next = current >= 97 ? current : current + 1;
+        setUploadStage(getFriendlyUploadStage(next));
+        return next;
+      });
+    }, 140);
 
     try {
       const response = await uploadFile(
         selectedFile,
-        (progress) => setUploadProgress(progress),
-        (stage) => setUploadStage(stage),
+        (progress) => {
+          smoothProgressTo(progress);
+          setUploadStage(getFriendlyUploadStage(progress));
+        },
+        (stage) => {
+          if (stage) setUploadStage(stage);
+        },
         storeId
       );
+
+      window.clearInterval(smoothTicker);
+      setUploadProgress(100);
+      setUploadStage('Upload completed');
 
       if (response?.status_code === 200) {
         toast({
           title: 'Archivo cargado',
           description: response.message ?? `${selectedFile.name} se subió correctamente.`,
         });
+
+        window.dispatchEvent(new CustomEvent('vision:data-uploaded', {
+          detail: {
+            storeId,
+            fileName: selectedFile.name,
+            at: Date.now(),
+          },
+        }));
+
         onOpenChange(false);
         resetState();
-
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
 
         return;
       }
@@ -99,6 +141,7 @@ export default function UploadDataModal({ open, onOpenChange, storeId }: UploadD
         description: response?.data?.detail ?? response?.detail ?? 'Intenta nuevamente con otro archivo.'
       });
     } finally {
+      window.clearInterval(smoothTicker);
       setIsUploading(false);
     }
   };
