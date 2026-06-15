@@ -26,6 +26,7 @@ METRICS_MAP = {
     "calendar_impact_income": get_calendar_impact_income,
     "calendar_uplift": get_calendar_uplift,
     "category_profitability": get_category_profitability,
+    "total_income": get_total_income_kpi,
 }
 
 
@@ -147,10 +148,6 @@ async def sale_detail(
             "status_code": 500,
             "message": f"Error interno del servidor: {str(e)}",
         }
-
-
-@router.get("/metrics/total-income")
-async def total_income(id_sucursal: int = Query(..., ge=1)):
     try:
         data = await get_total_income_kpi(id_sucursal)
         return {
