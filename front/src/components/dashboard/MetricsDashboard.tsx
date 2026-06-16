@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Info, Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -249,84 +249,106 @@ export default function MetricsDashboard({
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
+  const loadAllMetrics = useCallback(async () => {
+    // set all loading flags and clear errors
+    setIsLoadingTopProducts(true);
+    setIsLoadingTopProfitableProducts(true);
+    setIsLoadingWeatherImpactIncome(true);
+    setIsLoadingCalendarImpactIncome(true);
+    setIsLoadingCategoryProfitability(true);
+    setIsLoadingCalendarUplift(true);
+    setIsLoadingTotalIncomeKpi(true);
+
+    setTopProductsError('');
+    setTopProfitableProductsError('');
+    setWeatherImpactIncomeError('');
+    setCalendarImpactIncomeError('');
+    setCategoryProfitabilityError('');
+    setCalendarUpliftError('');
+    setTotalIncomeKpiError('');
+
+    // fetch all metrics with a single call (idSucursal + explicit date window)
+    const resp = await getAllMetrics(selectedStoreId, 10, startDate, endDate);
+
+    if (resp.status_code === 200 && resp.data) {
+      const t = resp.data.top_sold;
+      if (t && t.status_code === 200 && Array.isArray(t.data)) setTopProducts(t.data as TopSoldProductItem[]);
+      else { setTopProducts([]); setTopProductsError(t?.message || 'No se pudo obtener la metrica.'); }
+
+      const p = resp.data.top_profitable;
+      if (p && p.status_code === 200 && Array.isArray(p.data)) setTopProfitableProducts(p.data as TopProfitableProductItem[]);
+      else { setTopProfitableProducts([]); setTopProfitableProductsError(p?.message || 'No se pudo obtener la metrica.'); }
+
+      const w = resp.data.weather_impact_income;
+      if (w && w.status_code === 200 && Array.isArray(w.data)) setWeatherImpactIncome(w.data as WeatherImpactIncomeItem[]);
+      else { setWeatherImpactIncome([]); setWeatherImpactIncomeError(w?.message || 'No se pudo obtener la metrica.'); }
+
+      const c = resp.data.calendar_impact_income;
+      if (c && c.status_code === 200 && Array.isArray(c.data)) setCalendarImpactIncome(c.data as CalendarImpactIncomeItem[]);
+      else { setCalendarImpactIncome([]); setCalendarImpactIncomeError(c?.message || 'No se pudo obtener la metrica.'); }
+
+      const cat = resp.data.category_profitability;
+      if (cat && cat.status_code === 200 && Array.isArray(cat.data)) setCategoryProfitability(cat.data as CategoryProfitabilityItem[]);
+      else { setCategoryProfitability([]); setCategoryProfitabilityError(cat?.message || 'No se pudo obtener la metrica.'); }
+
+      const u = resp.data.calendar_uplift;
+      if (u && u.status_code === 200 && u.data) setCalendarUplift(u.data as CalendarUpliftItem);
+      else { setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 }); setCalendarUpliftError(u?.message || 'No se pudo obtener la metrica.'); }
+
+      const tik = resp.data.total_income_kpi || resp.data.total_income || resp.data.totalIncomeKpi;
+      if (tik && tik.status_code === 200 && t.data) setTotalIncomeKpi(tik.data as TotalIncomeKpiItem);
+      else { setTotalIncomeKpi({ total_income: 0, total_sales: 0, sales_days: 0, avg_daily_income: 0 }); setTotalIncomeKpiError(tik?.message || 'No se pudo obtener la metrica.'); }
+    } else {
+      const msg = resp.message || 'Error al obtener métricas';
+      setTopProducts([]); setTopProductsError(msg);
+      setTopProfitableProducts([]); setTopProfitableProductsError(msg);
+      setWeatherImpactIncome([]); setWeatherImpactIncomeError(msg);
+      setCalendarImpactIncome([]); setCalendarImpactIncomeError(msg);
+      setCategoryProfitability([]); setCategoryProfitabilityError(msg);
+      setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 }); setCalendarUpliftError(msg);
+      setTotalIncomeKpi({ total_income: 0, total_sales: 0, sales_days: 0, avg_daily_income: 0 }); setTotalIncomeKpiError(msg);
+    }
+
+    setIsLoadingTopProducts(false);
+    setIsLoadingTopProfitableProducts(false);
+    setIsLoadingWeatherImpactIncome(false);
+    setIsLoadingCalendarImpactIncome(false);
+    setIsLoadingCategoryProfitability(false);
+    setIsLoadingCalendarUplift(false);
+    setIsLoadingTotalIncomeKpi(false);
+  }, [selectedStoreId, startDate, endDate]);
+
   useEffect(() => {
     let mounted = true;
 
-    const loadAllMetrics = async () => {
-      // set all loading flags and clear errors
-      setIsLoadingTopProducts(true);
-      setIsLoadingTopProfitableProducts(true);
-      setIsLoadingWeatherImpactIncome(true);
-      setIsLoadingCalendarImpactIncome(true);
-      setIsLoadingCategoryProfitability(true);
-      setIsLoadingCalendarUplift(true);
-        setIsLoadingTotalIncomeKpi(true);
-
-      setTopProductsError('');
-      setTopProfitableProductsError('');
-      setWeatherImpactIncomeError('');
-      setCalendarImpactIncomeError('');
-      setCategoryProfitabilityError('');
-      setCalendarUpliftError('');
-      setTotalIncomeKpiError('');
-
-      // fetch all metrics with a single call (idSucursal + explicit date window)
-      const resp = await getAllMetrics(selectedStoreId, 10, startDate, endDate);
-      if (!mounted) return;
-
-      if (resp.status_code === 200 && resp.data) {
-        const t = resp.data.top_sold;
-        if (t && t.status_code === 200 && Array.isArray(t.data)) setTopProducts(t.data as TopSoldProductItem[]);
-        else { setTopProducts([]); setTopProductsError(t?.message || 'No se pudo obtener la metrica.'); }
-
-        const p = resp.data.top_profitable;
-        if (p && p.status_code === 200 && Array.isArray(p.data)) setTopProfitableProducts(p.data as TopProfitableProductItem[]);
-        else { setTopProfitableProducts([]); setTopProfitableProductsError(p?.message || 'No se pudo obtener la metrica.'); }
-
-        const w = resp.data.weather_impact_income;
-        if (w && w.status_code === 200 && Array.isArray(w.data)) setWeatherImpactIncome(w.data as WeatherImpactIncomeItem[]);
-        else { setWeatherImpactIncome([]); setWeatherImpactIncomeError(w?.message || 'No se pudo obtener la metrica.'); }
-
-        const c = resp.data.calendar_impact_income;
-        if (c && c.status_code === 200 && Array.isArray(c.data)) setCalendarImpactIncome(c.data as CalendarImpactIncomeItem[]);
-        else { setCalendarImpactIncome([]); setCalendarImpactIncomeError(c?.message || 'No se pudo obtener la metrica.'); }
-
-        const cat = resp.data.category_profitability;
-        if (cat && cat.status_code === 200 && Array.isArray(cat.data)) setCategoryProfitability(cat.data as CategoryProfitabilityItem[]);
-        else { setCategoryProfitability([]); setCategoryProfitabilityError(cat?.message || 'No se pudo obtener la metrica.'); }
-
-        const u = resp.data.calendar_uplift;
-        if (u && u.status_code === 200 && u.data) setCalendarUplift(u.data as CalendarUpliftItem);
-        else { setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 }); setCalendarUpliftError(u?.message || 'No se pudo obtener la metrica.'); }
-
-        const tik = resp.data.total_income_kpi || resp.data.total_income || resp.data.totalIncomeKpi;
-        if (tik && tik.status_code === 200 && t.data) setTotalIncomeKpi(tik.data as TotalIncomeKpiItem);
-        else { setTotalIncomeKpi({ total_income: 0, total_sales: 0, sales_days: 0, avg_daily_income: 0 }); setTotalIncomeKpiError(tik?.message || 'No se pudo obtener la metrica.'); }
-      } else {
-        const msg = resp.message || 'Error al obtener métricas';
-        setTopProducts([]); setTopProductsError(msg);
-        setTopProfitableProducts([]); setTopProfitableProductsError(msg);
-        setWeatherImpactIncome([]); setWeatherImpactIncomeError(msg);
-        setCalendarImpactIncome([]); setCalendarImpactIncomeError(msg);
-        setCategoryProfitability([]); setCategoryProfitabilityError(msg);
-        setCalendarUplift({ holiday_uplift: 0, weekend_uplift: 0 }); setCalendarUpliftError(msg);
-        setTotalIncomeKpi({ total_income: 0, total_sales: 0, sales_days: 0, avg_daily_income: 0 }); setTotalIncomeKpiError(msg);
+    const safeLoad = async () => {
+      await loadAllMetrics();
+      if (!mounted) {
+        return;
       }
-
-      setIsLoadingTopProducts(false);
-      setIsLoadingTopProfitableProducts(false);
-      setIsLoadingWeatherImpactIncome(false);
-      setIsLoadingCalendarImpactIncome(false);
-      setIsLoadingCategoryProfitability(false);
-      setIsLoadingCalendarUplift(false);
-      setIsLoadingTotalIncomeKpi(false);
     };
-    loadAllMetrics();
+
+    safeLoad();
 
     return () => {
       mounted = false;
     };
-  }, [selectedStoreId, startDate, endDate]);
+  }, [loadAllMetrics]);
+
+  useEffect(() => {
+    const onDataUploaded = (event: Event) => {
+      const detail = (event as CustomEvent<{ storeId?: number | null }>).detail;
+      if (!detail || detail.storeId == null || detail.storeId === selectedStoreId) {
+        loadAllMetrics();
+      }
+    };
+
+    window.addEventListener('vision:data-uploaded', onDataUploaded as EventListener);
+
+    return () => {
+      window.removeEventListener('vision:data-uploaded', onDataUploaded as EventListener);
+    };
+  }, [loadAllMetrics, selectedStoreId]);
   
   const hasUploadedData =
       topProducts.length > 0 ||

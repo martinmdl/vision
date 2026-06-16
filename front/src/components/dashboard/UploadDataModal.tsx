@@ -191,7 +191,7 @@ export default function UploadDataModal({ open, onOpenChange, storeId }: UploadD
               </p>
 
               {isUploading && (
-                <div className="space-y-2 pt-2">
+                <div className="space-y-2 pt-2 animate-pulse">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
                     <span>{uploadStage}</span>
                     <span>{uploadProgress}%</span>

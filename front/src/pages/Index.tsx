@@ -4,13 +4,20 @@ import MetricsDashboard from '@/components/dashboard/MetricsDashboard';
 import PredictionsView from '@/components/dashboard/PredictionsView';
 import DataView from '@/components/dashboard/DataView';
 import { useStoreState } from '@/hooks/useStoreState';
-import { useEffect } from 'react';
+import { getProcessedDataSummary } from '@/api/services/mvp.ts';
+import { useEffect, useState } from 'react';
 
 export default function Index() {
   const state = useStoreState();
   const selectedStore = state.allStores.find(s => s.id === state.selectedStoreId);
+  const [storeDateBounds, setStoreDateBounds] = useState<Record<number, { startDate: string; endDate: string }>>({});
+
   function computeRange(range: string | undefined) {
     if (!range) return { startDate: undefined, endDate: undefined };
+    if (range === 'all') {
+      return storeDateBounds[state.selectedStoreId] || { startDate: undefined, endDate: undefined };
+    }
+
     const today = new Date();
     const endDate = today.toISOString().slice(0, 10);
     let start: Date | undefined;
@@ -30,6 +37,52 @@ export default function Index() {
   }
 
   const { startDate, endDate } = computeRange(state.dateRange);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadStoreDateBounds = async () => {
+      const response = await getProcessedDataSummary(state.selectedStoreId);
+      if (!mounted || response.status_code !== 200 || !response.data?.overview) {
+        return;
+      }
+
+      const firstDate = response.data.overview.first_sale_date;
+      const lastDate = response.data.overview.last_sale_date;
+
+      if (!firstDate || !lastDate) {
+        return;
+      }
+
+      setStoreDateBounds(prev => ({
+        ...prev,
+        [state.selectedStoreId]: {
+          startDate: firstDate,
+          endDate: lastDate,
+        },
+      }));
+    };
+
+    loadStoreDateBounds();
+
+    const onDataUploaded = (event: Event) => {
+      if (!mounted) {
+        return;
+      }
+
+      const detail = (event as CustomEvent<{ storeId?: number | null }>).detail;
+      if (!detail || detail.storeId == null || detail.storeId === state.selectedStoreId) {
+        loadStoreDateBounds();
+      }
+    };
+
+    window.addEventListener('vision:data-uploaded', onDataUploaded as EventListener);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener('vision:data-uploaded', onDataUploaded as EventListener);
+    };
+  }, [state.selectedStoreId]);
 
   useEffect(() => {
       const viewLabel = state.viewMode === 'metrics'
@@ -61,6 +114,8 @@ export default function Index() {
           viewMode={state.viewMode}
           onViewChange={state.setViewMode}
           storeName={selectedStore?.name || 'Selecciona una tienda'}
+          activeStartDate={startDate}
+          activeEndDate={endDate}
           customDateStart={state.customDateStart}
           customDateEnd={state.customDateEnd}
           onCustomDateChange={(start, end) => {
@@ -76,7 +131,7 @@ export default function Index() {
             endDate={endDate}
           />
         ) : state.viewMode === 'predictions' ? (
-          <PredictionsView selectedStoreId={state.selectedStoreId} />
+          <PredictionsView selectedStoreId={state.selectedStoreId} hasSelectedStore={Boolean(selectedStore)} />
         ) : (
           <DataView selectedStoreId={state.selectedStoreId} />
         )}

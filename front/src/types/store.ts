@@ -25,7 +25,7 @@ export interface Metric {
 
 export type ViewMode = 'metrics' | 'predictions' | 'data';
 export type GridColumns = 1 | 2;
-export type DateRange = '7d' | '30d' | '90d' | 'custom';
+export type DateRange = 'all' | '7d' | '30d' | '90d' | 'custom';
 
 export const METRIC_CATEGORIES = [
   { key: 'finance', label: 'Finanzas', items: ['Ingresos', 'Ganancia', 'Margen Bruto', 'Margen Neto'] },

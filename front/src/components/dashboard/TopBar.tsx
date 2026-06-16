@@ -13,9 +13,24 @@ interface TopBarProps {
   viewMode: ViewMode;
   onViewChange: (mode: ViewMode) => void;
   storeName: string;
+  activeStartDate?: string;
+  activeEndDate?: string;
   customDateStart?: string;
   customDateEnd?: string;
   onCustomDateChange?: (startDate: string, endDate: string) => void;
+}
+
+function formatDisplayDate(value?: string) {
+  if (!value) {
+    return undefined;
+  }
+
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString('es-AR');
 }
 
 export default function TopBar({
@@ -24,6 +39,8 @@ export default function TopBar({
   viewMode,
   onViewChange,
   storeName,
+  activeStartDate,
+  activeEndDate,
   customDateStart,
   customDateEnd,
   onCustomDateChange,
@@ -31,7 +48,6 @@ export default function TopBar({
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
 
   const handleDateRangeSelect = (value: string) => {
-    console.log(isDateModalOpen)
     if (value !== 'custom') {
       onDateRangeChange(value as DateRange); 
     }
@@ -48,11 +64,30 @@ export default function TopBar({
       ? 'Predicciones'
       : 'Datos';
 
+  const dateRangeLabel = dateRange === 'all'
+    ? 'Todo el historial'
+    : dateRange === '7d'
+      ? 'Ultimos 7 dias'
+      : dateRange === '30d'
+        ? 'Ultimos 30 dias'
+        : dateRange === '90d'
+          ? 'Ultimos 90 dias'
+          : 'Rango personalizado';
+
+  const visibleStart = formatDisplayDate(activeStartDate);
+  const visibleEnd = formatDisplayDate(activeEndDate);
+  const visibleRange = visibleStart && visibleEnd
+    ? `${visibleStart} - ${visibleEnd}`
+    : 'Sin datos de fecha';
+
   return (
     <div className="flex items-center justify-between mb-6 sticky top-0 z-50 bg-white p-8 border border-gray-300 rounded-2xl shadow-sm">
       <div>
         <h2 className="text-lg font-bold text-foreground tracking-tight">{storeName}</h2>
         <p className="text-xs text-muted-foreground">Vision | {storeName} | {viewLabel}</p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Rango activo: <span className="font-medium text-foreground">{dateRangeLabel}</span> · {visibleRange}
+        </p>
       </div>
 
       <div className="flex items-center gap-3">
@@ -89,10 +124,11 @@ export default function TopBar({
         <div className="flex items-center gap-1.5">
           <Calendar className="w-4 h-4 text-muted-foreground" />
           <Select value={dateRange} onValueChange={handleDateRangeSelect}>
-            <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectTrigger className="w-40 h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">Todo el historial</SelectItem>
               <SelectItem value="7d">Ultimos 7 dias</SelectItem>
               <SelectItem value="30d">Ultimos 30 dias</SelectItem>
               <SelectItem value="90d">Ultimos 90 dias</SelectItem>

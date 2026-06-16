@@ -34,6 +34,52 @@ const INITIAL_STORES: Store[] = [];
 const INITIAL_METRICS: Metric[] = [];
 
 const SELECTED_STORE_KEY = 'selectedStoreId';
+const STORE_DATE_FILTERS_KEY = 'storeDateFilters';
+
+type StoreDateFilter = {
+  dateRange: DateRange;
+  customDateStart?: string;
+  customDateEnd?: string;
+};
+
+function getDefaultStoreDateFilter(): StoreDateFilter {
+  return {
+    dateRange: 'all',
+  };
+}
+
+function readStoredDateFilters(): Record<number, StoreDateFilter> {
+  if (typeof window === 'undefined') {
+    return {};
+  }
+
+  try {
+    const raw = window.localStorage.getItem(STORE_DATE_FILTERS_KEY);
+    if (!raw) {
+      return {};
+    }
+
+    const parsed = JSON.parse(raw) as Record<string, StoreDateFilter>;
+    const normalized: Record<number, StoreDateFilter> = {};
+
+    for (const [storeId, filter] of Object.entries(parsed)) {
+      const numericStoreId = Number(storeId);
+      if (!Number.isFinite(numericStoreId)) {
+        continue;
+      }
+
+      normalized[numericStoreId] = {
+        dateRange: filter?.dateRange ?? 'all',
+        customDateStart: filter?.customDateStart,
+        customDateEnd: filter?.customDateEnd,
+      };
+    }
+
+    return normalized;
+  } catch {
+    return {};
+  }
+}
 
 export function useStoreState() {
   const initialSelectedStoreId = typeof window === 'undefined'
@@ -44,17 +90,26 @@ export function useStoreState() {
   const [selectedStoreId, setSelectedStoreId] = useState<number>(initialSelectedStoreId);
   const [viewMode, setViewMode] = useState<ViewMode>('metrics');
   const [gridColumns, setGridColumns] = useState<GridColumns>(2);
-  const [dateRange, setDateRange] = useState<DateRange>('30d');
-  const [customDateStart, setCustomDateStart] = useState<string | undefined>();
-  const [customDateEnd, setCustomDateEnd] = useState<string | undefined>();
+  const [storeDateFilters, setStoreDateFilters] = useState<Record<number, StoreDateFilter>>(readStoredDateFilters);
   const [metrics, setMetrics] = useState<Metric[]>(INITIAL_METRICS);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const currentDateFilter = storeDateFilters[selectedStoreId] ?? getDefaultStoreDateFilter();
+  const dateRange = currentDateFilter.dateRange;
+  const customDateStart = currentDateFilter.customDateStart;
+  const customDateEnd = currentDateFilter.customDateEnd;
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     window.localStorage.setItem(SELECTED_STORE_KEY, String(selectedStoreId));
   }, [selectedStoreId]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    window.localStorage.setItem(STORE_DATE_FILTERS_KEY, JSON.stringify(storeDateFilters));
+  }, [storeDateFilters]);
 
   // Cargar tiendas desde backend al iniciar
   useEffect(() => {
@@ -66,6 +121,15 @@ export function useStoreState() {
         // mapear campos del backend a Store
         const mapped = data.map(d => ({ id: d.id_sucursal, name: d.nombre, files: [] }))
         setStores(mapped)
+        setStoreDateFilters(prev => {
+          const next = { ...prev };
+          for (const store of mapped) {
+            if (!next[store.id]) {
+              next[store.id] = getDefaultStoreDateFilter();
+            }
+          }
+          return next;
+        });
         if (mapped.length > 0) {
           const persistedStore = mapped.find(store => store.id === initialSelectedStoreId);
           setSelectedStoreId(persistedStore?.id || mapped[0].id);
@@ -141,6 +205,36 @@ export function useStoreState() {
   const filteredStores = stores.filter(s =>
     s.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const setDateRange = useCallback((nextRange: DateRange) => {
+    setStoreDateFilters(prev => ({
+      ...prev,
+      [selectedStoreId]: {
+        ...(prev[selectedStoreId] ?? getDefaultStoreDateFilter()),
+        dateRange: nextRange,
+      },
+    }));
+  }, [selectedStoreId]);
+
+  const setCustomDateStart = useCallback((startDate: string | undefined) => {
+    setStoreDateFilters(prev => ({
+      ...prev,
+      [selectedStoreId]: {
+        ...(prev[selectedStoreId] ?? getDefaultStoreDateFilter()),
+        customDateStart: startDate,
+      },
+    }));
+  }, [selectedStoreId]);
+
+  const setCustomDateEnd = useCallback((endDate: string | undefined) => {
+    setStoreDateFilters(prev => ({
+      ...prev,
+      [selectedStoreId]: {
+        ...(prev[selectedStoreId] ?? getDefaultStoreDateFilter()),
+        customDateEnd: endDate,
+      },
+    }));
+  }, [selectedStoreId]);
 
   return {
     stores: filteredStores,
