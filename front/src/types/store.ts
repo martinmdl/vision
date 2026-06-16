@@ -19,6 +19,8 @@ export interface Metric {
   isLoading?: boolean;
   error?: string;
   hasData?: boolean;
+  exportRows?: Array<Record<string, string | number | boolean | null>>;
+  exportFileName?: string;
 
   renderContent?: () => ReactNode;
 }

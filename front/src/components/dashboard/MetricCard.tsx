@@ -2,13 +2,11 @@ import { motion } from 'framer-motion';
 import {
   MoreHorizontal,
   Trash2,
-  Copy,
-  Settings,
-  Filter,
   Download,
-  BarChart3,
-    Info,
+  FileSpreadsheet,
+  Info,
 } from 'lucide-react';
+import { utils, writeFile } from 'xlsx';
 
 import type { Metric } from '@/types/store';
 
@@ -26,7 +24,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
-
 const CATEGORY_LABELS: Record<string, string> = {
   finance: 'finanzas',
   product: 'producto',
@@ -39,20 +36,65 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 interface MetricCardProps {
   metric: Metric;
-
   onRemove?: (id: string) => void;
   onDuplicate?: (id: string) => void;
 }
 
 function MetricActions({
   metricId,
+  metricTitle,
+  exportRows,
+  exportFileName,
   onRemove,
-  onDuplicate,
 }: {
   metricId: string;
+  metricTitle: string;
+  exportRows?: Array<Record<string, string | number | boolean | null>>;
+  exportFileName?: string;
   onRemove?: (id: string) => void;
-  onDuplicate?: (id: string) => void;
 }) {
+  const getRowsForExport = () => {
+    if (exportRows && exportRows.length > 0) {
+      return exportRows;
+    }
+
+    return [{ metric: metricTitle }];
+  };
+
+  const getExportBaseName = () => {
+    if (exportFileName && exportFileName.trim().length > 0) {
+      return exportFileName.trim();
+    }
+
+    return metricTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '') || 'metric';
+  };
+
+  const exportCsv = () => {
+    const rows = getRowsForExport();
+    const worksheet = utils.json_to_sheet(rows);
+    const csv = utils.sheet_to_csv(worksheet);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `${getExportBaseName()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportXlsx = () => {
+    const rows = getRowsForExport();
+    const worksheet = utils.json_to_sheet(rows);
+    const workbook = utils.book_new();
+    utils.book_append_sheet(workbook, worksheet, 'Metrica');
+    writeFile(workbook, `${getExportBaseName()}.xlsx`);
+  };
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -65,33 +107,14 @@ function MetricActions({
         align="end"
         className="w-48"
       >
-        <DropdownMenuItem>
-          <Settings className="w-3.5 h-3.5 mr-2" />
-          Editar configuración
-        </DropdownMenuItem>
-
-        <DropdownMenuItem
-          onClick={() =>
-            onDuplicate?.(metricId)
-          }
-        >
-          <Copy className="w-3.5 h-3.5 mr-2" />
-          Duplicar
-        </DropdownMenuItem>
-
-        <DropdownMenuItem>
-          <BarChart3 className="w-3.5 h-3.5 mr-2" />
-          Cambiar tipo de gráfico
-        </DropdownMenuItem>
-
-        <DropdownMenuItem>
-          <Filter className="w-3.5 h-3.5 mr-2" />
-          Aplicar filtros
-        </DropdownMenuItem>
-
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={exportCsv}>
           <Download className="w-3.5 h-3.5 mr-2" />
-          Exportar CSV
+          Exportar a CSV
+        </DropdownMenuItem>
+
+        <DropdownMenuItem onClick={exportXlsx}>
+          <FileSpreadsheet className="w-3.5 h-3.5 mr-2" />
+          Exportar a XLSX
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
@@ -113,7 +136,6 @@ function MetricActions({
 export default function MetricCard({
   metric,
   onRemove,
-  onDuplicate,
 }: MetricCardProps) {
   if (metric.error) {
     return null;
@@ -122,8 +144,6 @@ export default function MetricCard({
   const resolvedCategory =
     CATEGORY_LABELS[metric.category] ??
     metric.category;
-
-  const isPositive = metric.change >= 0;
 
   return (
     <motion.div
@@ -149,10 +169,10 @@ export default function MetricCard({
           </span>
 
           <span className="flex items-center gap-1.5">
-          <h3 className="text-sm font-semibold text-card-foreground">
-            {metric.title}
-          </h3>
-          {metric.titleInfo && (
+            <h3 className="text-sm font-semibold text-card-foreground">
+              {metric.title}
+            </h3>
+            {metric.titleInfo && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
@@ -168,19 +188,22 @@ export default function MetricCard({
                 </TooltipContent>
               </Tooltip>
             )}
-            </span>
+          </span>
 
         </div>
 
         <MetricActions
           metricId={metric.id}
+          metricTitle={metric.title}
+          exportRows={metric.exportRows}
+          exportFileName={metric.exportFileName}
           onRemove={onRemove}
-          onDuplicate={onDuplicate}
         />
       </div>
 
       <div className="flex items-end gap-2 mb-4">
         <span className="text-2xl font-bold text-card-foreground">
+          {metric.value}
         </span>
       </div>
 

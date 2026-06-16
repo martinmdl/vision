@@ -35,6 +35,7 @@ const INITIAL_METRICS: Metric[] = [];
 
 const SELECTED_STORE_KEY = 'selectedStoreId';
 const STORE_DATE_FILTERS_KEY = 'storeDateFilters';
+const PREDICTIONS_STORAGE_PREFIX = 'vision:predictions:';
 
 type StoreDateFilter = {
   dateRange: DateRange;
@@ -81,6 +82,33 @@ function readStoredDateFilters(): Record<number, StoreDateFilter> {
   }
 }
 
+function clearStoredPredictionsForStore(storeId: number) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.removeItem(`${PREDICTIONS_STORAGE_PREFIX}${storeId}`);
+}
+
+function prunePredictionsForMissingStores(existingStoreIds: number[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  const validIds = new Set(existingStoreIds);
+  for (let i = 0; i < window.localStorage.length; i += 1) {
+    const key = window.localStorage.key(i);
+    if (!key || !key.startsWith(PREDICTIONS_STORAGE_PREFIX)) {
+      continue;
+    }
+
+    const storeId = Number(key.slice(PREDICTIONS_STORAGE_PREFIX.length));
+    if (!Number.isFinite(storeId) || !validIds.has(storeId)) {
+      window.localStorage.removeItem(key);
+    }
+  }
+}
+
 export function useStoreState() {
   const initialSelectedStoreId = typeof window === 'undefined'
     ? 1
@@ -121,6 +149,7 @@ export function useStoreState() {
         // mapear campos del backend a Store
         const mapped = data.map(d => ({ id: d.id_sucursal, name: d.nombre, files: [] }))
         setStores(mapped)
+        prunePredictionsForMissingStores(mapped.map(store => store.id));
         setStoreDateFilters(prev => {
           const next = { ...prev };
           for (const store of mapped) {
@@ -148,12 +177,14 @@ export function useStoreState() {
 
     const newStore: Store = { id: res.id_sucursal, name, files: [] };
     setStores(prev => [...prev, newStore]);
+    clearStoredPredictionsForStore(newStore.id);
     setSelectedStoreId(newStore.id);
   }, []);
 
   const deleteStore = useCallback(async (id: number) => {
     const ok = await setStoreActivo(id, false);
     if (ok) {
+      clearStoredPredictionsForStore(id);
       setStores(prev => prev.filter(s => s.id !== id));
       setSelectedStoreId(prev => prev === id ? (stores[0]?.id || 1) : prev);
     }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Info, Plus } from 'lucide-react';
+import { Info } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import {
   DndContext, closestCenter, PointerSensor, useSensor, useSensors,
@@ -11,7 +11,6 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import type { Metric } from '@/types/store';
 import MetricCard from './MetricCard';
-import AddMetricModal from './AddMetricModal';
 import {
   getAllMetrics,
   type TopSoldProductItem,
@@ -209,7 +208,6 @@ export default function MetricsDashboard({
   endDate,
 }: MetricsDashboardProps) {
   const [metricIds, setMetricIds] = useState<string[]>([]);
-  const [showAdd, setShowAdd] = useState(false);
 
   const [topProducts, setTopProducts] = useState<TopSoldProductItem[]>([]);
   const [isLoadingTopProducts, setIsLoadingTopProducts] = useState(false);
@@ -383,6 +381,11 @@ export default function MetricsDashboard({
           error: topProductsError,
 
           hasData: topProducts.length > 0,
+          exportRows: topProducts.map(item => ({
+            producto: item.name,
+            demanda: item.demand,
+          })),
+          exportFileName: 'top_productos_mas_vendidos',
 
           renderContent: () => (
             <TopProductsChart data={topProducts} />
@@ -402,6 +405,11 @@ export default function MetricsDashboard({
           error: topProfitableProductsError,
 
           hasData: topProfitableProducts.length > 0,
+          exportRows: topProfitableProducts.map(item => ({
+            producto: item.name,
+            ganancia: item.profit,
+          })),
+          exportFileName: 'top_productos_mas_rentables',
 
           renderContent: () => (
             <TopProfitableProductsChart
@@ -423,6 +431,12 @@ export default function MetricsDashboard({
           error: weatherImpactIncomeError,
 
           hasData: weatherImpactIncome.length > 0,
+          exportRows: weatherImpactIncome.map(item => ({
+            mes: item.month,
+            ingreso_dia_lluvioso: item.rainy_income,
+            ingreso_dia_despejado: item.clear_income,
+          })),
+          exportFileName: 'impacto_clima_adverso',
 
           renderContent: () => (
             <WeatherImpactIncomeChart
@@ -444,6 +458,13 @@ export default function MetricsDashboard({
           error: calendarImpactIncomeError,
 
           hasData: calendarImpactIncome.length > 0,
+          exportRows: calendarImpactIncome.map(item => ({
+            mes: item.month,
+            ingreso_festivo: item.festive_income,
+            ingreso_normal: item.normal_income,
+            ingreso_fin_de_semana: item.weekend_income,
+          })),
+          exportFileName: 'comparativa_tipo_dia',
 
           renderContent: () => (
             <CalendarImpactIncomeChart
@@ -465,6 +486,11 @@ export default function MetricsDashboard({
           error: categoryProfitabilityError,
 
           hasData: categoryProfitability.length > 0,
+          exportRows: categoryProfitability.map(item => ({
+            categoria: item.name,
+            ganancia: item.profit,
+          })),
+          exportFileName: 'rentabilidad_por_categoria',
 
           renderContent: () => (
             <CategoryProfitabilityChart
@@ -602,14 +628,6 @@ export default function MetricsDashboard({
       </div>)
       }
 
-      <button
-        onClick={() => setShowAdd(true)}
-        className="fixed bottom-6 right-6 w-12 h-12 rounded-full bg-primary text-primary-foreground shadow-lg hover:scale-105 transition-transform flex items-center justify-center z-50"
-      >
-        <Plus className="w-5 h-5" />
-      </button>
-
-      <AddMetricModal open={showAdd} onClose={() => setShowAdd(false)} onAdd={() => {}} />
     </>
   );
 }
