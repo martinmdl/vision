@@ -4,7 +4,7 @@ import json
 from difflib import get_close_matches
 
 OLLAMA_URL = "http://ollama:11434/api/generate"
-MODELO = "llama3.2:3b"  
+MODELO = "qwen2.5-coder:3b"  
 
 def extraer_datos_completos(path):
     xls = pd.ExcelFile(path)

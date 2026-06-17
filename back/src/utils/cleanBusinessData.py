@@ -26,6 +26,7 @@ def clean_xls(xls_file, mapeo, id_sucursal=None):
 
     if id_sucursal is not None:
         df_venta["id_sucursal"] = id_sucursal
+        df_detalle_venta["id_sucursal"] = id_sucursal
         df_producto["id_sucursal"] = id_sucursal
 
     # id_detalle después de limpiar para evitar huecos
