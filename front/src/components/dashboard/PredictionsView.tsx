@@ -5,7 +5,7 @@ import {
   Tooltip, ResponsiveContainer,
 } from 'recharts';
 import { TrendingUp, Calendar, Table, Info } from 'lucide-react';
-import { getProcessedDataSummary, predict, type PredictionItem } from '@/api/services/mvp.ts';
+import { getProcessedDataSummary, predict, predictByDateForecast, type PredictionItem } from '@/api/services/mvp.ts';
 import { Progress } from '@/components/ui/progress';
 import {
   Tooltip as UiTooltip,
@@ -135,6 +135,8 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
   const [predictMessage, setPredictMessage] = useState<string>('');
   const [predictProgress, setPredictProgress] = useState(0);
   const [predictStage, setPredictStage] = useState('');
+
+  const FORECAST_TEST_DATE = '2025-09-04';
 
   useEffect(() => {
     if (!hasSelectedStore) {
@@ -278,6 +280,54 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
     setIsLoading(false);
   };
 
+  const handleGenerateForecastDatePrediction = async () => {
+    if (!hasSelectedStore || !hasStoreData) {
+      return;
+    }
+
+    setIsLoading(true);
+    setPredictMessage('');
+    setPredictProgress(6);
+    setPredictStage(`Fetching forecast for ${FORECAST_TEST_DATE}`);
+
+    const predictionStages = [
+      `Fetching forecast for ${FORECAST_TEST_DATE}`,
+      'Resolving holiday features',
+      'Running CatBoost inference',
+      'Preparing dashboard outputs',
+    ];
+
+    const progressTimer = window.setInterval(() => {
+      setPredictProgress((current) => {
+        if (current >= 94) return current;
+        const next = current + (current < 40 ? 3 : current < 75 ? 2 : 1);
+        const stageIndex = Math.min(
+          predictionStages.length - 1,
+          Math.floor((next / 95) * predictionStages.length)
+        );
+        setPredictStage(predictionStages[stageIndex]);
+        return next;
+      });
+    }, 180);
+
+    const response = await predictByDateForecast(selectedStoreId, FORECAST_TEST_DATE);
+    window.clearInterval(progressTimer);
+    setPredictProgress(100);
+    setPredictStage('Completed');
+
+    if (response.status_code === 200 && Array.isArray(response.data)) {
+      const { dateKeys, rows } = buildHeatmapFromPredictions(response.data);
+      setHeatmapDateKeys(dateKeys);
+      setBackendHeatmap(rows);
+      setLastPredictionDate(new Date());
+      setPredictMessage(`Prediccion del ${FORECAST_TEST_DATE} generada correctamente.`);
+    } else {
+      setPredictMessage(response.message || 'No se pudo generar la prediccion por fecha.');
+    }
+
+    setIsLoading(false);
+  };
+
   return (
     <div className="space-y-6">
       {!hasSelectedStore ? (
@@ -304,13 +354,22 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
             <h3 className="text-sm font-semibold text-card-foreground">
               Fecha de la ultima prediccion: {formatLastPredictionDate(lastPredictionDate)}
             </h3>
-            <button
-              onClick={handleGeneratePredictions}
-              disabled={isLoading}
-              className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60"
-            >
-              {isLoading ? 'Generando predicciones...' : 'Generar predicciones'}
-            </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                onClick={handleGeneratePredictions}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium rounded-lg bg-primary text-primary-foreground hover:opacity-90 disabled:opacity-60"
+              >
+                {isLoading ? 'Generando predicciones...' : 'Generar predicciones'}
+              </button>
+              <button
+                onClick={handleGenerateForecastDatePrediction}
+                disabled={isLoading}
+                className="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-60"
+              >
+                Predecir 04/09/2025 (pronostico)
+              </button>
+            </div>
           </div>
 
           {isLoading && (

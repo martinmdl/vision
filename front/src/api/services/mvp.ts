@@ -312,6 +312,35 @@ export async function predict(idSucursal: number): Promise<PredictResponse> {
   }
 }
 
+export async function predictByDateForecast(idSucursal: number, fecha: string): Promise<PredictResponse> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/predict/by-date-forecast`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ id_sucursal: idSucursal, fecha }),
+    });
+
+    const payload = await response.json();
+
+    if (typeof payload?.status_code === 'number') {
+      return payload as PredictResponse;
+    }
+
+    return {
+      status_code: response.ok ? 200 : response.status,
+      message: response.ok ? 'Prediccion por fecha completada' : 'Error en la prediccion por fecha',
+      data: Array.isArray(payload?.data) ? payload.data : undefined,
+    };
+  } catch {
+    return {
+      status_code: 500,
+      message: 'No se pudo conectar con el backend.',
+    };
+  }
+}
+
 export interface BatchMetricItem {
   status_code: number;
   message?: string;

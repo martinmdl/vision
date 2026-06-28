@@ -69,3 +69,37 @@ async def obtener_clima_proximos_dias():
     df_clima_futuro["fecha"] = pd.to_datetime(df_clima_futuro["fecha"])
     #df_clima_futuro = df_clima_futuro.iloc[1:] 
     return df_clima_futuro
+
+
+def obtener_pronostico_fecha(fecha: str):
+    base_url = "https://historical-forecast-api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": -34.593186,
+        "longitude": -58.495826,
+        "timezone": "auto",
+        "start_date": fecha,
+        "end_date": fecha,
+        "daily": "temperature_2m_max,temperature_2m_min,temperature_2m_mean,relative_humidity_2m_mean,rain_sum,cloud_cover_mean,wind_speed_10m_mean,surface_pressure_mean",
+    }
+
+    response = requests.get(base_url, params=params)
+    response.raise_for_status()
+    data = response.json()
+
+    if "daily" not in data or not data["daily"].get("time"):
+        raise ValueError("No se encontro pronostico para la fecha solicitada")
+
+    df_clima = pd.DataFrame({
+        "fecha": data["daily"]["time"],
+        "temp_avg": data["daily"]["temperature_2m_mean"],
+        "temp_min": data["daily"]["temperature_2m_min"],
+        "temp_max": data["daily"]["temperature_2m_max"],
+        "humedad": data["daily"]["relative_humidity_2m_mean"],
+        "lluvia": data["daily"]["rain_sum"],
+        "viento": data["daily"]["wind_speed_10m_mean"],
+        "presion": data["daily"]["surface_pressure_mean"],
+        "nubosidad": data["daily"]["cloud_cover_mean"],
+    })
+
+    df_clima["fecha"] = pd.to_datetime(df_clima["fecha"])
+    return df_clima
