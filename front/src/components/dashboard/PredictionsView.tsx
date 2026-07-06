@@ -71,7 +71,7 @@ function buildHeatmapFromPredictions(items: PredictionItem[]): { dateKeys: strin
       const totalB = dateKeys.reduce((sum, dateKey) => sum + (b.values[dateKey] || 0), 0);
       return totalB - totalA;
     })
-    .slice(0, 12);
+    .filter(({ values }) => dateKeys.some(dateKey => (values[dateKey] || 0) > 0));
 
   return { dateKeys, rows };
 }
@@ -136,7 +136,7 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
   const [predictProgress, setPredictProgress] = useState(0);
   const [predictStage, setPredictStage] = useState('');
 
-  const FORECAST_TEST_DATE = '2025-09-04';
+  const FORECAST_TEST_DATE = '2025-10-14';
 
   useEffect(() => {
     if (!hasSelectedStore) {
@@ -367,7 +367,7 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
                 disabled={isLoading}
                 className="px-4 py-2 text-sm font-medium rounded-lg border border-border bg-card hover:bg-muted disabled:opacity-60"
               >
-                Predecir 04/09/2025 (pronostico)
+                Predecir {FORECAST_TEST_DATE} (pronostico)
               </button>
             </div>
           </div>
@@ -398,7 +398,7 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
             <>
 
               {/* KPI Cards */}
-              <div className="grid grid-cols-3 gap-4">
+              {/* <div className="grid grid-cols-3 gap-4">
                 {[
                   { icon: TrendingUp, label: 'Ventas Totales Predichas', value: totalPredicted.toLocaleString(), sub: 'Proximos 7 dias' },
                   { icon: Calendar, label: 'Dia de Mayor Demanda', value: highestDay.day, sub: `${highestDay.predicted.toLocaleString()} unidades` },
@@ -421,7 +421,7 @@ export default function PredictionsView({ selectedStoreId, hasSelectedStore }: P
                     <div className="text-xs text-muted-foreground mt-0.5">{kpi.sub}</div>
                   </motion.div>
                 ))}
-              </div>
+              </div> */}
 
               {/* Heatmap */}
               <div className="bg-card rounded-xl border border-border shadow-card p-5">
